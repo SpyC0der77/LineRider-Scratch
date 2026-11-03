@@ -1,0 +1,13 @@
+{
+  "sprites": [
+    {
+      "name": "Line Rider core",
+      "blocks": 7822
+    },
+    {
+      "name": "Prompt history",
+      "blocks": 2
+    }
+  ],
+  "simulationFramesPerSecond": 23.01092043681747
+}

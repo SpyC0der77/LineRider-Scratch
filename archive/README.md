@@ -29,5 +29,10 @@ Every recovered `.sb3` is preserved unchanged, with its exact executable Scratch
 | [v022-prompt-history](v022-prompt-history/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v023-prompt-history](v023-prompt-history/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v024-prompt-usernames](v024-prompt-usernames/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v025-multiple-sprites](v025-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v026-multiple-sprites](v026-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v027-multiple-sprites](v027-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v028-multiple-sprites](v028-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v029-multiple-sprites](v029-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
 
 `python tools/build.py` archives each distinct new build automatically. Existing snapshots are never overwritten.

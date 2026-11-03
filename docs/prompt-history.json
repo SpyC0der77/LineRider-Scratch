@@ -107,6 +107,10 @@
     {
       "number": 26,
       "text": "In the prompt history you can have peoples username lol"
+    },
+    {
+      "number": 27,
+      "text": "Refactor this into multiple sprites please, it is getting too big for just the one sprite"
     }
   ]
 }

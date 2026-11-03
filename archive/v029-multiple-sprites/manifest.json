@@ -1,0 +1,10 @@
+{
+  "version": "v029-multiple-sprites",
+  "original_file": "dist\\Line Rider.sb3",
+  "sha256": "611707c82b361672b512d3c620af9899d6e0d0482b0699c9cfe18b20bc75a7e1",
+  "original_modified": "2026-11-03T11:24:08.976340",
+  "archived": "2026-11-03T11:24:09.464568",
+  "exact_native_source": true,
+  "complete_python_generator": true,
+  "validation_note": "Final multi-sprite release. Validation record: artifacts/sprite-refactor-validation.json in the repository root."
+}

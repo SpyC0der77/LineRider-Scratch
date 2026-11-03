@@ -61,11 +61,13 @@ New and Demo preserve the saved slot. The green flag resets the editor and run s
 
 ## Build and verification
 
+The native project is divided into **Game controller**, **Physics**, **Track editor**, **Menus**, **Track codes**, and **Renderer**, plus the existing **Prompt history** sprite. Each sprite has a comment explaining its responsibilities and a list of incoming requests. The largest sprite has about 2,250 blocks. [The sprite guide](docs/sprite-architecture.md) explains the shared state, message boundaries, and build process.
+
 Local Scratch account metadata, historical publishing-helper copies, Python bytecode and local credential/configuration files are excluded by the root `.gitignore`. Archived game builds and their generators remain included. The lr-core reference is included as ordinary source files, with no submodule setup required. Its original Git administration data is retained locally under an ignored `.git-local-metadata` directory.
 
 The optional upload helper reads the account name from `SCRATCH_USERNAME` or the `owner` field in the ignored `artifacts/scratch-upload.json`. That local record must also contain the existing project `id`. The password is read from a private file supplied at runtime. Account details are not part of the public source.
 
-Run `python tools/build.py` to rebuild the project. It uses Python's standard library and the checked-in `reference/lr-core` source. `tools/core.py` contains the point solver and its Scratch block builder; `tools/build.py` adds the editor, game states, spatial grid, clipping and SVG control assets. All delivered behavior runs in native Scratch blocks with the built-in Pen extension. No JavaScript extension or development server is needed.
+Run `python tools/build.py` to rebuild the project. It uses Python's standard library and the checked-in `reference/lr-core` source. `tools/core.py` contains the point solver and its Scratch block builder; `tools/build.py` assembles the editor, game states, spatial grid, clipping and SVG control assets. `tools/split_sprites.py` places each procedure in its owning sprite and creates native messages for calls between sprites. All delivered behavior runs in native Scratch blocks with the built-in Pen extension. No JavaScript extension or development server is needed.
 
 Every build is also copied into its own folder in [archive](archive/README.md), with its exact native Scratch code, all assets, a checksum, a repacking script and the complete Python generator. The archive also preserves every older `.sb3` found in this workspace. The original demo and blank baseline have verified original generators; intermediate historical versions retain their exact native Scratch code because their original Python generators were overwritten. Each version records what could be recovered. Run `python tools/archive_versions.py --recover` to discover additional old artifacts without replacing existing snapshots.
 

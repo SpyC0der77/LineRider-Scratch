@@ -129,18 +129,21 @@ chrome_render += [setv('status','Edit'),iff(cmp('equals',V('State'),1),[setv('st
 chrome_render += [iff(cmp('equals',V('Editing'),0),text(cat('Frame ',V('Frame'),' ',mathop('round',V('Frame')/30*1000)/1000,'s ',mathop('round',mathop('sqrt',L('VX',5)*L('VX',5)+L('VY',5)*L('VY',5))*30),'u/s'),70,-166),[iff(cmp('equals',V('Mobile'),0),text('G grid   H home   Space test',70,-166))])]
 chrome_render += [iff(AND(cmp('gt',V('Notice'),0),cmp('lt',Expr('sensing_timer'),V('Notice until'))),stamp(cat('notice ',V('Notice')),0,-136))]
 chrome_render += [iff(cmp('equals',V('State'),3),stamp(cat('crashed ',V('Mobile')),0,-112)),iff(cmp('equals',V('State'),4),stamp(cat('finished ',V('Mobile')),0,12)),iff(cmp('equals',V('Help'),1),stamp(cat('help ',V('Mobile')),0,-15))]
-render += [iff(cmp('equals',V('Full play'),0),chrome_render,render_play_view(globals()))]
-render += render_popups(globals())
-render += render_code(globals())
-proc('render',render)
+proc('render scene',render)
+proc('render chrome',chrome_render)
+proc('render overlays',render_popups(globals())+render_code(globals()))
+proc('render',[call('render scene'),iff(cmp('equals',V('Full play'),0),[call('render chrome')],render_play_view(globals())),call('render overlays')])
 # Native hats queue taps; the coordinator executes actions between render transactions.
 lists['Input keys']=['Input keys',[]]
 shortcuts=[('space','play or pause'),('r','retry'),('n','step once'),('z','request undo'),('y','request redo'),('f','fit track'),('s','request save track'),('l','request load track'),('e','request return to editor'),('g','toggle grid'),('x','detach rider')]
 proc('editor keyboard',[iff(cmp('equals',V('Input key'),k),[call(action)]) for k,action in shortcuts]+[iff(AND(cmp('equals',V('Input key'),'h'),cmp('equals',V('Editing'),1)),[call('home view')])]+[iff(AND(cmp('equals',V('Input key'),str(i+1)),cmp('equals',V('Editing'),1)),[setv('Tool',i)]) for i in range(6)])
 proc('keyboard normal',[setv('Input key',''),iff(cmp('gt',length('Input keys'),0),[setv('Input key',L('Input keys',1)),delete('Input keys',1),iff(cmp('equals',V('Confirm open'),1),[call('confirmation keyboard')],[iff(cmp('equals',V('Menu'),0),[iff(cmp('equals',V('Help'),0),[call('editor keyboard')])],[call('menu keyboard')])])]),iff(AND(AND(cmp('equals',V('Editing'),1),cmp('equals',V('Help'),0)),cmp('equals',V('Menu'),0)),[iff(key('right arrow'),[change('Camera X',8/V('Zoom'))]),iff(key('left arrow'),[change('Camera X',-8/V('Zoom'))]),iff(key('up arrow'),[change('Camera Y',-8/V('Zoom'))]),iff(key('down arrow'),[change('Camera Y',8/V('Zoom'))])])])
 proc('keyboard',[iff(cmp('gt',V('Code open'),0),[iff(cmp('gt',length('Input keys'),0),[setv('Input key',L('Input keys',1)),delete('Input keys',1),call('code keyboard')])],[call('keyboard normal')])])
-# The only forever loop owns physics, input, history transactions and drawing.
-script('event_whenflagclicked',[stmt('looks_hide'),stmt('pen_penUp'),setv('Mobile',1),setv('Full play',0),setv('Editing',1),setv('Playing',0),setv('Tool',0),setv('Brush',0),setv('Drawing',0),setv('Mouse was down',0),setv('Help',0),setv('Menu',0),setv('Confirm open',0),setv('Code open',0),stmt('data_hidelist',{}, {'LIST':['Track code','Track code']}),setv('Pending edit action',0),setv('Requested edit action',0),setv('Queued click',0),setv('Queued steps',0),setv('Capture hold',0),setv('Capture ready',0),clear('Input keys'),setv('Grid',0),setv('Grid ready',0),setv('Notice',0)]+clearstack('Undo')+clearstack('Redo')+[setv('State',0),call('home view'),('forever',[setv('Mouse X',Expr('sensing_mousex')),setv('Mouse Y',Expr('sensing_mousey')),setv('Mouse down',Expr('sensing_mousedown')),call('menu hover'),call('keyboard'),setv('Click handled',0),iff(AND(cmp('gt',V('Queued steps'),0),cmp('equals',V('Code open'),0)),[change('Queued steps',-1),call('step once')]),iff(cmp('equals',V('Queued click'),1),[setv('Click handled',1),setv('Mouse X',V('Click X')),setv('Mouse Y',V('Click Y')),setv('Queued click',0),call('pointer down'),setv('Mouse X',Expr('sensing_mousex')),setv('Mouse Y',Expr('sensing_mousey'))]),iff(AND(AND(AND(cmp('equals',V('Click handled'),0),V('Mouse down')),NOT(V('Mouse was down'))),AND(AND(cmp('equals',V('Menu'),0),cmp('equals',V('Help'),0)),AND(cmp('lt',V('Mouse Y'),100),cmp('lt',V('Tool'),4)))),[call('pointer down')]),iff(V('Mouse down'),[call('pointer drag')]),iff(AND(NOT(V('Mouse down')),V('Mouse was down')),[call('pointer up')]),setv('Mouse was down',V('Mouse down')),iff(AND(AND(AND(cmp('equals',V('Playing'),1),cmp('equals',V('Help'),0)),cmp('equals',V('Menu'),0)),AND(cmp('equals',V('Confirm open'),0),cmp('equals',V('Code open'),0))),[call('physics frame'),call('follow rider'),call('check result')]),iff(cmp('equals',V('Editing'),1),[setv('Edit camera X',V('Camera X')),setv('Edit camera Y',V('Camera Y')),setv('Edit zoom',V('Zoom'))]),call('render'),iff(cmp('equals',V('Code open'),2),[call('prompt track code')]),iff(cmp('equals',V('Capture hold'),1),[setv('Capture ready',1),stmt('control_wait_until',{'CONDITION':cmp('equals',V('Capture hold'),0)}),setv('Capture ready',0)]),stmt('control_wait',{'DURATION':.001})])])
+# The controller serializes subsystem requests between input and rendering.
+# Renderer requests a redraw before its message completes, supplying the frame
+# boundary. An extra timed wait here would halve the native frame rate.
+proc('advance ride',[call('physics frame'),call('follow rider'),call('check result')])
+script('event_whenflagclicked',[stmt('looks_hide'),stmt('pen_penUp'),setv('Mobile',1),setv('Full play',0),setv('Editing',1),setv('Playing',0),setv('Tool',0),setv('Brush',0),setv('Drawing',0),setv('Mouse was down',0),setv('Help',0),setv('Menu',0),setv('Confirm open',0),setv('Code open',0),stmt('data_hidelist',{}, {'LIST':['Track code','Track code']}),setv('Pending edit action',0),setv('Requested edit action',0),setv('Queued click',0),setv('Queued steps',0),setv('Capture hold',0),setv('Capture ready',0),clear('Input keys'),setv('Grid',0),setv('Grid ready',0),setv('Notice',0)]+clearstack('Undo')+clearstack('Redo')+[setv('State',0),call('home view'),('forever',[setv('Mouse X',Expr('sensing_mousex')),setv('Mouse Y',Expr('sensing_mousey')),setv('Mouse down',Expr('sensing_mousedown')),iff(cmp('gt',V('Menu'),0),[call('menu hover')]),call('keyboard'),setv('Click handled',0),iff(AND(cmp('gt',V('Queued steps'),0),cmp('equals',V('Code open'),0)),[change('Queued steps',-1),call('step once')]),iff(cmp('equals',V('Queued click'),1),[setv('Click handled',1),setv('Mouse X',V('Click X')),setv('Mouse Y',V('Click Y')),setv('Queued click',0),call('pointer down'),setv('Mouse X',Expr('sensing_mousex')),setv('Mouse Y',Expr('sensing_mousey'))]),iff(AND(AND(AND(cmp('equals',V('Click handled'),0),V('Mouse down')),NOT(V('Mouse was down'))),AND(AND(cmp('equals',V('Menu'),0),cmp('equals',V('Help'),0)),AND(cmp('lt',V('Mouse Y'),100),cmp('lt',V('Tool'),4)))),[call('pointer down')]),iff(V('Mouse down'),[call('pointer drag')]),iff(AND(NOT(V('Mouse down')),V('Mouse was down')),[call('pointer up')]),setv('Mouse was down',V('Mouse down')),iff(AND(AND(AND(cmp('equals',V('Playing'),1),cmp('equals',V('Help'),0)),cmp('equals',V('Menu'),0)),AND(cmp('equals',V('Confirm open'),0),cmp('equals',V('Code open'),0))),[call('advance ride')]),iff(cmp('equals',V('Editing'),1),[setv('Edit camera X',V('Camera X')),setv('Edit camera Y',V('Camera Y')),setv('Edit zoom',V('Zoom'))]),call('render'),iff(cmp('equals',V('Code open'),2),[call('prompt track code')]),iff(cmp('equals',V('Capture hold'),1),[setv('Capture ready',1),stmt('control_wait_until',{'CONDITION':cmp('equals',V('Capture hold'),0)}),setv('Capture ready',0)])])])
 # SVG assets are geometric editor controls, not a generated mockup.
 assets={}
 def costume(name,svg,cx,cy):
@@ -191,6 +194,11 @@ if current_path.exists():
 from clean_project import clean
 release,report=clean(project)
 test_project,test_report=clean(project,test_hooks=True)
+from split_sprites import split as split_sprites
+release,module_report=split_sprites(release,costume,svg)
+test_project,_=split_sprites(test_project,costume,svg)
+report['blocks_after']=sum(len(t['blocks']) for t in release['targets'])
+report['modules']=module_report
 (ROOT/'dist/testing').mkdir(parents=True,exist_ok=True)
 # Test hooks are separate; the delivered .sb3 contains no capture/step test state.
 def write_project(path,data):
@@ -208,5 +216,5 @@ print(json.dumps(report))
 (ROOT/'dist/ui-controls.json').write_text(json.dumps({c['name']:{'x':c['x']+c['w']/2,'y':c['y']+c['h']/2} for c in controls},indent=2),encoding='utf-8')
 
 from archive_versions import snapshot, index as archive_index
-snapshot(ROOT/'dist/Line Rider.sb3','prompt-usernames',generator=True)
+snapshot(ROOT/'dist/Line Rider.sb3','multiple-sprites',generator=True)
 archive_index()
