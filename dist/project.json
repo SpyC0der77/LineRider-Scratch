@@ -178069,7 +178069,7 @@
           "width": 520,
           "height": 145,
           "minimized": false,
-          "text": "Prompt history\n\n22 user-written prompts in chronological order, including the request for this sprite. Personal details and credentials are replaced with redaction markers. System/environment context and private attachment references are excluded."
+          "text": "Prompt history\n\n26 user prompts in order. Public usernames are kept; passwords, private contact details and local paths are redacted. Automatic context is omitted."
         },
         "prompt-01": {
           "blockId": null,
@@ -178078,7 +178078,7 @@
           "width": 520,
           "height": 376,
           "minimized": false,
-          "text": "Prompt 01\n\nUsing the MCP server in \"[local path]\", find out if [creator 1]'s Force2D package would be suitable for this project. I want to recreate Line Rider in Scratch. I think this is a good idea for a game to recreate in Scratch because it has relatively simple rigid physics and is fun. We need to find the best Rigid Body physics engine for this in Scratch. It should be performant, have good enough collisions so that there can be one body held inside of another body but can be flung out (the player and the sled respectively), have good support for lines that are drawn with varying friction levels. The lines are very important, because if it treats each segment as a rectangle then it would not look smooth and the player would jump and stuff. It should support scrolling. Work on this."
+          "text": "Prompt 01\n\nUsing the MCP server in \"[local path]\", find out if Ricky-Jan's Force2D package would be suitable for this project. I want to recreate Line Rider in Scratch. I think this is a good idea for a game to recreate in Scratch because it has relatively simple rigid physics and is fun. We need to find the best Rigid Body physics engine for this in Scratch. It should be performant, have good enough collisions so that there can be one body held inside of another body but can be flung out (the player and the sled respectively), have good support for lines that are drawn with varying friction levels. The lines are very important, because if it treats each segment as a rectangle then it would not look smooth and the player would jump and stuff. It should support scrolling. Work on this."
         },
         "prompt-02": {
           "blockId": null,
@@ -178195,7 +178195,7 @@
           "width": 520,
           "height": 142,
           "minimized": false,
-          "text": "Prompt 14\n\nFigure it out. [Scratch account] password: [credential removed]"
+          "text": "Prompt 14\n\nFigure it out. SomeonesSchoolAcc password: [credential removed]"
         },
         "prompt-15": {
           "blockId": null,
@@ -178231,7 +178231,7 @@
           "width": 520,
           "height": 376,
           "minimized": false,
-          "text": "Prompt 18\n\nAlso when you update the project (I shared it) make sure that the notes and credits stays like this with the instructions being blank. \"This is lowkey unfinished but it is good enough and I have a lot of traffic going to my profile right now (because [creator 1] and [creator 2] loved and faved one of my projects) so I am trying to get this out as fast as possible.\n\nThe only thing I haven't implemented is save and load codes and various improvements to mobile\n\nBy \"I\" I mean AI. GPT 6.1 Sol on High did literally everything.\". Also clean up the code for goodness sake, there are so many orphaned blocks and unused crap everywhere."
+          "text": "Prompt 18\n\nAlso when you update the project (I shared it) make sure that the notes and credits stays like this with the instructions being blank. \"This is lowkey unfinished but it is good enough and I have a lot of traffic going to my profile right now (because @Ricky-Jan and @s_federici loved and faved one of my projects) so I am trying to get this out as fast as possible.\n\nThe only thing I haven't implemented is save and load codes and various improvements to mobile\n\nBy \"I\" I mean AI. GPT 6.1 Sol on High did literally everything.\". Also clean up the code for goodness sake, there are so many orphaned blocks and unused crap everywhere."
         },
         "prompt-19": {
           "blockId": null,
@@ -178268,6 +178268,42 @@
           "height": 160,
           "minimized": false,
           "text": "Prompt 22\n\nAdd a new sprite with comments that have the content of every prompt I have sent to you (with PII removed obviously)"
+        },
+        "prompt-23": {
+          "blockId": null,
+          "x": 20,
+          "y": 5154,
+          "width": 520,
+          "height": 124,
+          "minimized": false,
+          "text": "Prompt 23\n\nIs there any PII in this directory?"
+        },
+        "prompt-24": {
+          "blockId": null,
+          "x": 20,
+          "y": 5323,
+          "width": 520,
+          "height": 160,
+          "minimized": false,
+          "text": "Prompt 24\n\nI want to push this directory to GitHub. Windows username and local paths doesn't matter. Either gitignore PII it or remove it from this directory."
+        },
+        "prompt-25": {
+          "blockId": null,
+          "x": 20,
+          "y": 5528,
+          "width": 520,
+          "height": 160,
+          "minimized": false,
+          "text": "Prompt 25\n\nI want to create a new repo with it that is called \"LineRider-Scratch\", public. Do that. This shouldn't be a sub module"
+        },
+        "prompt-26": {
+          "blockId": null,
+          "x": 20,
+          "y": 5733,
+          "width": 520,
+          "height": 124,
+          "minimized": false,
+          "text": "Prompt 26\n\nIn the prompt history you can have peoples username lol"
         }
       },
       "currentCostume": 0,

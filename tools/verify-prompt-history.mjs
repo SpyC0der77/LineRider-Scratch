@@ -4,6 +4,7 @@ const root='C:/Users/Carter/code/Scratch/Line Rider',s=new EditorSession(),befor
 try{
  await s.openFile(root+'/dist/Line Rider.sb3');const extracted=await s.extract();await s.call('green_flag');await wait(400);await s.call('stop_button');const page=s.requirePage();
  await page.screenshot({path:root+'/artifacts/prompt-history-'+(before?'before':'after')+'.png'});
+ if(process.argv.includes('--usernames')){await page.click('[aria-label="Prompt history"]');await wait(300);await page.screenshot({path:root+'/artifacts/prompt-usernames-'+(before?'before':'after')+'.png',clip:{x:310,y:95,width:475,height:750}});}
  if(!before){
   const expected=JSON.parse(await fs.readFile(root+'/docs/prompt-history.json','utf8'));
   const project=await s.call('get_project_json'),sprite=project.targets.find(t=>t.name==='Prompt history');assert.ok(sprite);assert.equal(sprite.visible,false);assert.equal(Object.keys(sprite.comments).length,expected.prompts.length+1);

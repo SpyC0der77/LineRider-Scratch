@@ -208,5 +208,5 @@ print(json.dumps(report))
 (ROOT/'dist/ui-controls.json').write_text(json.dumps({c['name']:{'x':c['x']+c['w']/2,'y':c['y']+c['h']/2} for c in controls},indent=2),encoding='utf-8')
 
 from archive_versions import snapshot, index as archive_index
-snapshot(ROOT/'dist/Line Rider.sb3','prompt-history',generator=True)
+snapshot(ROOT/'dist/Line Rider.sb3','prompt-usernames',generator=True)
 archive_index()

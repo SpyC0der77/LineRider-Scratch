@@ -18,7 +18,7 @@ def make_sprite(root, target, costume, svg):
     sprite['layerOrder']=2
     sprite['comments'] = {'prompt-history-index': {
         'blockId':None,'x':20,'y':135,'width':520,'height':145,'minimized':False,
-        'text':f"Prompt history\n\n{len(prompts)} user-written prompts in chronological order, including the request for this sprite. Personal details and credentials are replaced with redaction markers. System/environment context and private attachment references are excluded."
+        'text':f"Prompt history\n\n{len(prompts)} user prompts in order. Public usernames are kept; passwords, private contact details and local paths are redacted. Automatic context is omitted."
     }}
     y=320
     for prompt in prompts:

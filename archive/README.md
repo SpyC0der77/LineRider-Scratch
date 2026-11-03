@@ -28,5 +28,6 @@ Every recovered `.sb3` is preserved unchanged, with its exact executable Scratch
 | [v021-button-color-fix](v021-button-color-fix/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v022-prompt-history](v022-prompt-history/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v023-prompt-history](v023-prompt-history/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v024-prompt-usernames](v024-prompt-usernames/README.md) | dist\Line Rider.sb3 | Native + Python |
 
 `python tools/build.py` archives each distinct new build automatically. Existing snapshots are never overwritten.
