@@ -1,0 +1,9 @@
+{
+  "version": "v015-shared-before-update",
+  "original_file": "artifacts\\shared-before-update.sb3",
+  "sha256": "b7cc73354e7261b4396a511ad99a9611d142318f3875688baaa206a4ed3176f1",
+  "original_modified": "2026-11-02T21:27:00.250665",
+  "archived": "2026-11-02T21:27:00.536970",
+  "exact_native_source": true,
+  "complete_python_generator": false
+}

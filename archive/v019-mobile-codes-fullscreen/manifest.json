@@ -1,0 +1,17 @@
+{
+  "version": "v019-mobile-codes-fullscreen",
+  "original_file": "dist\\Line Rider.sb3",
+  "sha256": "edd398c6cd371049afee67ccbe512d2707dfa70dcffb622c9c5eec039934cfaa",
+  "original_modified": "2026-11-02T21:49:17.938174",
+  "archived": "2026-11-02T21:49:18.403244",
+  "exact_native_source": true,
+  "complete_python_generator": true,
+  "validated": {
+    "native_release_smoke": true,
+    "mobile_touch_and_fullscreen": true,
+    "track_code_3000_segments": true,
+    "mounted_physics_reference": true,
+    "ragdoll_settling_retry": true,
+    "archive_rebuild": true
+  }
+}

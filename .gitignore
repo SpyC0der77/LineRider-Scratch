@@ -1,0 +1,19 @@
+# Local Scratch account metadata and saved server responses.
+scratch-upload.json
+shared-metadata*.json
+
+# Historical publishing helpers contain a hardcoded account name. Keep these
+# copies locally; the archived game generators and Scratch projects stay public.
+/archive/**/source/generator/tools/upload_scratch.py
+
+# Local credentials/configuration and generated Python bytecode.
+.env
+.env.*
+!.env.example
+*.local.json
+__pycache__/
+*.py[cod]
+
+# Git administration data from vendored repositories is not project source.
+**/.git/
+**/.git-local-metadata/

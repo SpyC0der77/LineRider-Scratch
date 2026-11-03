@@ -1,0 +1,18 @@
+{
+  "version": "v021-button-color-fix",
+  "original_file": "dist\\Line Rider.sb3",
+  "sha256": "d8e13ca2e34dbdd59a507c94703ecfc7825c4babf875f173573f0477940b30ac",
+  "original_modified": "2026-11-03T09:10:11.292120",
+  "archived": "2026-11-03T09:10:11.975305",
+  "exact_native_source": true,
+  "complete_python_generator": true,
+  "validated": {
+    "run_from_edit_colors": true,
+    "run_from_preview_colors": true,
+    "pause_retry_step_hover_colors": true,
+    "disabled_step_fill": true,
+    "high_density_display": true,
+    "no_clip_paths_or_transformed_fills": true,
+    "executable_code_and_track_unchanged": true
+  }
+}

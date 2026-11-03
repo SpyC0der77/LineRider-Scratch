@@ -1,0 +1,21 @@
+import {EditorSession} from './editor-session.mjs';import fs from 'node:fs/promises';import assert from 'node:assert/strict';
+import {PNG} from 'file:///C:/Users/Carter/Code/Scratch/Scratch%20AI%20Integrations/project-optimizer/node_modules/pngjs/lib/png.js';
+process.env.SCRATCH_OPTIMIZER_HEADLESS='1';const root='C:/Users/Carter/code/Scratch/Line Rider',s=new EditorSession();const wait=ms=>new Promise(r=>setTimeout(r,ms));const state=()=>s.call('get_variable_list_data');const before=process.argv.includes('--before');
+async function until(c,label){const end=Date.now()+15000;while(Date.now()<end){const v=await state();if(c(v))return v;await wait(20);}throw new Error('Timed out '+label);}
+async function click(x,y){await s.clickStage(x-240,180-y);}
+async function freeze(){await s.call('set_variable_values',{values:{'Capture hold':1}});return until(v=>+v.variables['Capture ready']===1,'capture');}
+async function release(){await s.call('set_variable_values',{values:{'Capture hold':0}});await until(v=>+v.variables['Capture ready']===0,'release');}
+function pixel(p,x,y){const i=(y*p.width+x)*4;return '#'+[...p.data.subarray(i,i+3)].map(n=>n.toString(16).padStart(2,'0')).join('');}
+async function capture(name){const r=await s.capture(),bytes=Buffer.from(r.image_base64,'base64'),p=PNG.sync.read(bytes);if(name){await fs.writeFile(root+'/artifacts/'+name+'.png',bytes);const box=await s.requirePage().$eval('canvas',e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}});await s.requirePage().screenshot({path:root+'/artifacts/'+name+'-buttons.png',clip:{x:box.x+284/480*box.width,y:box.y+7/360*box.height,width:188/480*box.width,height:62/360*box.height}});}return p;}
+try{
+ await s.openFile(root+'/dist/Line Rider.sb3');await s.extract();await s.call('green_flag');await until(v=>+v.variables.Editing===1&&+v.variables.Zoom===1.8,'startup');await wait(200);
+ await click(315.333333333,56);await until(v=>+v.variables.Playing===1&&+v.variables.Editing===0,'Run directly from Edit');let v=await freeze(),p=await capture('button-colors-'+(before?'before':'after'));console.log('Run transition', {mode:v.variables['Mode selected'],running:v.variables['Transport running'],hover:v.variables['Assembly hover'],pause:pixel(p,296,49),retry:pixel(p,358,49),step:pixel(p,422,49)});
+ if(!before){assert.equal(pixel(p,296,49),'#30332f');assert.equal(pixel(p,358,49),'#faf8f5');assert.equal(pixel(p,422,49),'#f1eee8');assert.equal(pixel(p,425,12),'#30332f');console.log('PASS Pause has a dark background and Step has its disabled fill after Run from Edit');}
+ await release();if(before)process.exitCode=0;
+ else{
+  await click(315.333333333,56);v=await until(v=>+v.variables.Playing===0,'Pause');await freeze();p=await capture();assert.equal(pixel(p,296,49),'#e5e0d7');assert.equal(pixel(p,422,49),'#faf8f5');await release();console.log('PASS paused Run hover and enabled Step colors');
+  const f=+v.variables.Frame;await click(440.666666667,56);await until(v=>+v.variables.Frame===f+1,'Step');await freeze();p=await capture();assert.equal(pixel(p,422,49),'#e5e0d7');await release();
+  await click(378,56);await until(v=>+v.variables.Playing===1,'Retry');await freeze();p=await capture();assert.equal(pixel(p,296,49),'#30332f');assert.equal(pixel(p,358,49),'#e5e0d7');assert.equal(pixel(p,422,49),'#f1eee8');await release();console.log('PASS Step and Retry hover colors stay distinct from active Pause');
+  await click(331,20);await until(v=>+v.variables.Editing===1,'Edit');await click(425,20);await until(v=>+v.variables.Editing===0&&+v.variables.Playing===0,'paused preview');await click(315.333333333,56);await until(v=>+v.variables.Playing===1,'Run from preview');await freeze();p=await capture();assert.equal(pixel(p,296,49),'#30332f');await release();console.log('PASS both entry paths retain the correct button palette');
+ }
+}finally{await s.close();}

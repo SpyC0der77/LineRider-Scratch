@@ -1,0 +1,16 @@
+{
+  "blocks_before": 11061,
+  "blocks_after": 8116,
+  "compressed_variable_reporters": 2865,
+  "unused_procedures": [
+    "new or edit",
+    "request demo track",
+    "request load track code",
+    "request new track",
+    "request toggle finish goal"
+  ],
+  "removed_variables": 9,
+  "removed_lists": 0,
+  "orphaned_blocks": 0,
+  "test_hooks": false
+}

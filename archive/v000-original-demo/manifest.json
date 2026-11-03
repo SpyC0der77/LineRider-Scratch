@@ -1,0 +1,11 @@
+{
+  "version": "v000-original-demo",
+  "original_file": "artifacts\\demo-v1.sb3",
+  "sha256": "1eec595287fc5156c18fd3a65a018b1ae41fc1d223cf8c904a6d0bcf13e9a92b",
+  "original_modified": "2026-11-02T16:32:08.108591",
+  "archived": "2026-11-02T19:51:10.075008",
+  "exact_native_source": true,
+  "complete_python_generator": true,
+  "generator_verified_against_native": true,
+  "generator_output": "dist/Line Rider.sb3"
+}

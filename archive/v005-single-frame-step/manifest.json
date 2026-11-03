@@ -1,0 +1,9 @@
+{
+  "version": "v005-single-frame-step",
+  "original_file": "artifacts\\before-mode-switch.sb3",
+  "sha256": "914865b5c8ff9e4ef0d8b9a61523174314d134318e77377e500037d712e760d1",
+  "original_modified": "2026-11-02T17:38:25.568799",
+  "archived": "2026-11-02T19:51:11.058700",
+  "exact_native_source": true,
+  "complete_python_generator": false
+}

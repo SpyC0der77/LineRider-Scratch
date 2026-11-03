@@ -1,0 +1,16 @@
+{
+  "version": "v023-prompt-history",
+  "original_file": "dist\\Line Rider.sb3",
+  "sha256": "1420d079e454c1f50dc8b75ff5ec22a18619c8d4bd3e0c975d2f7ddf0e6d8e45",
+  "original_modified": "2026-11-03T09:25:14.936141",
+  "archived": "2026-11-03T09:25:15.445598",
+  "exact_native_source": true,
+  "complete_python_generator": true,
+  "validated": {
+    "prompt_count": 22,
+    "native_comment_roundtrip": true,
+    "pii_and_credential_redaction": true,
+    "hidden_during_gameplay": true,
+    "original_gameplay_targets_unchanged": true
+  }
+}
