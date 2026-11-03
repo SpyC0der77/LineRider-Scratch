@@ -48,7 +48,7 @@ def main():
     if before.get('author', {}).get('username', '').lower() != username.lower():
         raise RuntimeError('Project owner mismatch')
     was_shared = bool(before.get('history', {}).get('shared'))
-    notes = (root/'docs'/'scratch-notes.txt').read_text(encoding='utf-8').rstrip('\r\n')
+    notes = (root/'docs'/'scratch-notes.txt').read_text(encoding='utf-8-sig').rstrip('\r\n')
     remote_response = session.get(f'https://projects.scratch.mit.edu/{project_id}', params={'token':before['project_token']}, timeout=40)
     remote_response.raise_for_status()
     try:

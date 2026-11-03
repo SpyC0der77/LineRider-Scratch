@@ -86,7 +86,7 @@ def install(api):
         setv('Queued click', 0), setv('Drawing', 0), clear('Input keys')])
     proc('load track code', [call('close track code'), setv('Code error', ''), setv('Code open', 2)])
     # All decoded records are validated before any actual track/history mutation.
-    segment = read('Code token') + [iff(cmp('gt', V('Code token'), 7), bad('A segment material is invalid.')),
+    segment = read('Code token') + [iff(cmp('gt', V('Code token'), 11), bad('A segment material is invalid.')),
         setv('Code material value', mathop('floor', V('Code token')/2)),
         setv('Code sx', V('Code previous X')), setv('Code sy', V('Code previous Y')),
         iff(cmp('equals', mod(V('Code token'), 2), 0), read('Code delta X', True)+read('Code delta Y', True)+[

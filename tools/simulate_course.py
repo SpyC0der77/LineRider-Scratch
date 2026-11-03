@@ -7,7 +7,7 @@ cs=[]
 for c in b['constraints']:
  if c['type'] in ['Stick','BindStick','RepelStick']:
   a,z=ids[c['p1']],ids[c['p2']];rest=math.dist(a['pos'],z['pos'])*c.get('lengthFactor',1);cs.append((c,a,z,rest))
-from course import default_track
+from course import default_track, DEFAULT_GOAL
 tracks=default_track()
 for frame in range(3000):
  for q in p:
@@ -47,6 +47,6 @@ for frame in range(3000):
 
  if not mounted:
   print("CRASH",frame+1,ids["BUTT"]["pos"]);break
- if ids["BUTT"]["pos"][0]>700:
+ if ids["BUTT"]["pos"][0]>DEFAULT_GOAL[0]:
   print("FINISH",frame+1,ids["BUTT"]["pos"]);break
 else:print("TIMEOUT",ids["BUTT"]["pos"])

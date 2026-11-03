@@ -19,7 +19,7 @@ def define_controls(api):
   dict(id=3,x=126,top=36,w=208,rows=[row('Zoom in','+',[call('zoom in')]),row('Zoom out','-',[call('zoom out')]),row('Fit track','F',[call('fit track')]),row('Start view','H',[call('home view')],editing_off),None,row('Grid and snapping','G',[call('toggle grid')],checked=cmp('equals',V('Grid'),1))]),
   dict(id=4,x=184,top=36,w=190,rows=[row('Controls and storage',action=[call('toggle help')])]),
   dict(id=5,x=8,top=76,w=196,rows=[row(label,str(i+1),[setv('Tool',i)],editing_off,cmp('equals',V('Tool'),i)) for i,label in enumerate(['Pencil','Straight line','Eraser','Pan','Start flag','Goal flag'])]),
-  dict(id=6,x=142,top=76,w=204,rows=[row(label,action=[setv('Brush',i)],disabled=editing_off,checked=cmp('equals',V('Brush'),i)) for i,label in enumerate(['Normal','Grip','Ice','Scenery'])])]
+  dict(id=6,x=142,top=76,w=204,rows=[row(label,action=[setv('Brush',i)],disabled=editing_off,checked=cmp('equals',V('Brush'),i)) for i,label in enumerate(['Normal','Grip','Ice','Scenery','Acceleration','Reverse boost'])])]
  for menu in menus:
   y=menu['top']+6;index=0
   for r in menu['rows']:
@@ -80,7 +80,7 @@ def render_controls(api):
   if name=='play':out += [iff(cmp('equals',V('Playing'),1),[setv('button label','Pause')])]
   if name=='track':out += [iff(cmp('equals',V('Dirty'),1),[setv('button label','Track*')])]
   if name=='tool':out += [iff(cmp('equals',V('Tool'),i),[setv('button label',label)]) for i,label in enumerate(['Pencil','Straight line','Eraser','Pan','Start flag','Goal flag'])]
-  if name=='material':out += [iff(cmp('equals',V('Brush'),i),[setv('button label',label)]) for i,label in enumerate(['Normal','Grip','Ice','Scenery'])]
+  if name=='material':out += [iff(cmp('equals',V('Brush'),i),[setv('button label',label)]) for i,label in enumerate(['Normal','Grip','Ice','Scenery','Acceleration','Reverse boost'])]
   out += [iff(hit(c['x'],c['y'],c['w'],c['h']),[setv('button state','hover')])]
   if name=='edit-mode':out += [iff(cmp('equals',V('Editing'),1),[setv('button state','selected')])]
   if name=='play-mode':out += [iff(cmp('equals',V('Editing'),0),[setv('button state','selected')])]
@@ -118,7 +118,7 @@ def build_assets(api):
   if name=='play':labels+=['Pause']
   if name=='track':labels+=['Track*']
   if name=='tool':labels+=['Straight line','Eraser','Pan','Start flag','Goal flag']
-  if name=='material':labels+=['Grip','Ice','Scenery']
+  if name=='material':labels+=['Grip','Ice','Scenery','Acceleration','Reverse boost']
   flat=name in ['track','edit','view','help']
   for label in labels:
    for state in ['normal','hover']+(['selected'] if c.get('menu') else [])+(['disabled'] if c.get('disabled') is not None else []):

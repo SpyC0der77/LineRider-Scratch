@@ -2,7 +2,7 @@
 
 Open [dist/Line Rider.sb3](dist/Line%20Rider.sb3) in Scratch using **File > Load from your computer**, then click the green flag. The project opens in the track editor. Click **Run** to ride the sample course. The **Edit / Play** switch is one joined control in the upper right. Run/Pause, Retry and Step form a shared toolbar below it, connected to the Play half. The switch selects the mode: Play opens a paused preview, and Edit stops the run and restores your editing camera and zoom. Selecting the active mode again does not reset it. Track, Edit, View and Help are dropdown menus; the second row selects the active tool and material. Use Scratch's fullscreen stage for larger controls.
 
-The current canvas preserves the owner's 128-line track from the shared project. **Track > Demo course** restores the original 140-line course: only normal lines along a continuous descent and a rounded dip, without a stop, wall or gap. On that course the rider loses the seat naturally around frame 96. After detachment the articulated rider tumbles until it settles, with a six-second maximum fall duration. Retry starts from your start flag; Edit returns to the previous editing view. `tracks/current.json` holds the preserved canvas separately from the Demo course.
+The opening track and **Track > Demo course** now use a 3,300-unit rolling descent with 413 normal segments, broad bowls and smaller rolling hills. The goal is at x=3,100. The numerical rider simulation reaches it seated at frame 348. `tracks/current.json` retains the previous owner's canvas as a backup.
 
 The interface starts in mobile mode, with touch instructions and no keyboard shortcuts. Pressing any key on the stage switches to desktop mode. Typing into the track-code answer box does not switch modes. Mobile erasing repairs one skipped segment only when its connected neighbors were removed less than 350 ms apart during the same drag. It checks the original endpoints and stable segment IDs, so unrelated lines and separate gestures do not bridge. Undo restores the entire erase gesture.
 
@@ -18,7 +18,7 @@ In Play, the expand icon beside the Edit / Play selector opens an uninterrupted 
 | Tool > Pan / 4 | Drag the canvas to move the camera. Arrow keys also pan. |
 | Tool > Start flag / 5 | Click to place the rider's starting point. Put it just above the track. |
 | Tool > Goal flag / 6 | Click to place the finish flag near the riding surface. |
-| Material dropdown | Select Normal, Grip, Ice or Scenery directly for new segments. The current choice is checked. |
+| Material dropdown | Select Normal, Grip, Ice, Scenery, Acceleration or Reverse boost directly for new segments. The current choice is checked. |
 | Edit > Undo / Z, Redo / Y | Undo or redo one complete stroke or track operation. Each stack holds twelve snapshots. |
 | View > Zoom in / Zoom out | Zoom around the center of the canvas. |
 | View > Fit track / F | Fit the complete track and flags in view. |
@@ -27,7 +27,7 @@ In Play, the expand icon beside the Edit / Play selector opens an uninterrupted 
 | Track > New track | Clear the canvas and place default start and goal flags. Undo restores the previous track. |
 | Track > Save track code | Generate a compact code for the current track. Double-click its row, then Ctrl+A and Ctrl+C to copy. |
 | Track > Load track code | Paste a code into Scratch's answer box. Empty input cancels. A valid load is undoable. |
-| Track > Demo course | Restore the default all-normal crash course. Also undoable. |
+| Track > Demo course | Restore the long rolling course. Also undoable. |
 | Help > Controls and storage | Show controls and storage instructions. Click to close. |
 
 Click a menu item to choose it. Disabled actions are muted. Click outside a menu, click its header again, or press Q to dismiss it; the dismissal click does not draw. With a menu open, Up/Down selects an enabled item and Enter activates it. Opening a menu suspends playback until it closes. Keyboard shortcuts work when menus are closed. Track and Edit menu actions that require editing remain available in Play mode. They first ask: This action will change the mode to "Edit". Are you sure you want to do this? Switch to Edit confirms and performs the requested action; Cancel leaves the mode, track and preview intact. Playback is frozen while the dialog is open and resumes on Cancel if it was running. Enter confirms and Q cancels. The same guard applies to S, L, Z, Y and E. Unavailable actions, such as loading an empty saved slot or undoing with no history, remain disabled. Step and Detach do not require switching to Edit. The explicit Edit mode switch still changes mode directly.
@@ -36,7 +36,7 @@ Click a menu item to choose it. Disabled actions are muted. Click outside a menu
 
 Stroke ends snap to nearby existing endpoints. Lines are one-sided and automatically oriented left to right, so their riding surface faces upward. The tool preserves upward-facing normals when drawing from right to left. Vertical walls have a direction-dependent collision side.
 
-Normal lines use the original point-friction model. Grip lines add damping along the track tangent. Ice disables point friction. Scenery is visible but does not collide. The renderer clips all terrain and rider strokes to the canvas, including very long offscreen lines.
+Normal lines use the original point-friction model. Grip lines add damping along the track tangent. Ice disables point friction. Scenery is visible but does not collide. Acceleration adds the original lr-core 0.1 tangent boost on contact; Reverse boost applies it in the opposite direction. Acceleration lines are red and retain their material in saved codes. The renderer clips all terrain and rider strokes to the canvas, including very long offscreen lines.
 
 ## Playback
 
@@ -85,7 +85,7 @@ Adapted from David Lu / conundrumer's [lr-core 0.8.2](https://github.com/conundr
 
 Mounted motion keeps the original 17-point lr-core model, Verlet integration, gravity of 0.175 and six constraint/contact passes. Four articulated elbow/knee nodes and a physical head bring the total to 22 points. They follow the original pose until detachment, preserving the original ride and natural unseating. After detachment, eight solver passes enforce mass-weighted limb bones, knee/elbow bend direction, neck limits and selected self-separation constraints. Circle-to-line contacts give the head and limbs thickness; small restitution, tangent friction and air damping let the body roll, slide and settle. Track segments remain lines. Retry restores the mounted state and clears contacts. Original Stick, RepelStick, breakable BindStick, orientation-based BindJoint, DirectedChain scarf constraints and direct SolidLine contacts are retained for the mounted solver. A 64-unit spatial grid supplies nearby line candidates in source order. Geometry edits invalidate it; playback rebuilds it once. Camera coordinates do not affect physics.
 
-This remains a subset port. It does not include upstream immutable timeline/rewind, file-format compatibility, procedural scarf flutter, endpoint extension flags or acceleration lines. Grip/Ice/Scenery are editor material extensions. Extreme speeds can tunnel through the original ten-unit line contact bound. The track limit is 3,000 segments; this limit is a guard against unbounded editing, not a performance guarantee. Undo snapshots and the saved slot increase project size. Drawing, menus and gameplay work with a pointer or touch; the desktop mode also supplies keyboard controls.
+This remains a subset port. It does not include upstream immutable timeline/rewind, file-format compatibility, procedural scarf flutter, endpoint extension flags. Grip/Ice/Scenery are editor material extensions. Extreme speeds can tunnel through the original ten-unit line contact bound. The track limit is 3,000 segments; this limit is a guard against unbounded editing, not a performance guarantee. Undo snapshots and the saved slot increase project size. Drawing, menus and gameplay work with a pointer or touch; the desktop mode also supplies keyboard controls.
 
 The previous demo is retained at `artifacts/demo-v1.sb3`.
 
@@ -98,3 +98,7 @@ Connected toolbar check: `node tools/verify-connected.mjs` tests the shared mode
 Smooth-course and connector check: `node tools/verify-smooth.mjs` verifies a continuous all-normal track with no blocking segments, the rendered parent/bus/three connector branches, natural rider separation and an intact sled.
 
 Ragdoll check: `node tools/verify-ragdoll.mjs` compares the mounted motion with the numerical source, checks natural detachment, bone stability, finite motion, settling, pause/resume/step and retry. `tools/ragdoll.py` defines the post-detachment body and contact solver. The default fall settles naturally rather than reaching the duration cap.
+
+Scratch compatibility: mouse booleans use explicit comparisons. Scalar variables placed directly in boolean sockets can become dangling block references after Scratch GUI saves the project. `node tools/verify-scratch-online.mjs` checks the published project in the official Scratch runtime, including export/import, fullscreen and playback.
+
+Acceleration regression: `node tools/verify-acceleration.mjs` checks drawing, native LR1 round trips, forward/reverse boosts and 30-frame numerical agreement with the lr-core equations.

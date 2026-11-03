@@ -27,7 +27,7 @@ All fields following the three-character prefix are variable-length integers.
 | Segment records | Exactly the declared number, in original order |
 | Checksum | Unsigned, computed over every preceding body digit |
 
-A segment record begins with `material*2 + connected`. Materials are 0 Normal, 1 Grip, 2 Ice and 3 Scenery. `connected` is 1 when the quantized start equals the preceding segment's quantized end. Before the first segment, the preceding end is `(0, 0)`.
+A segment record begins with `material*2 + connected`. Materials are 0 Normal, 1 Grip, 2 Ice, 3 Scenery, 4 Acceleration and 5 Reverse boost. Existing LR1 codes remain valid; older project versions reject the new materials. `connected` is 1 when the quantized start equals the preceding segment's quantized end. Before the first segment, the preceding end is `(0, 0)`.
 
 When `connected` is 0, two signed integers store the segment start minus the preceding end. These are omitted when `connected` is 1. Two signed integers then store the segment end minus its start. Update the preceding end after each record.
 

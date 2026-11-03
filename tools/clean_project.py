@@ -98,6 +98,17 @@ def clean(project, *, test_hooks=False):
             break
     # Scratch normally performs this compact reporter serialization after a
     # manual save. Emit it directly so no standalone variable reporters remain.
+    # Use real boolean reporters so Scratch Blocks can save every sprite safely.
+    for target in result['targets']:
+        blocks=target['blocks']
+        for block in list(blocks.values()):
+            for name,value in list(block['inputs'].items()):
+                boolean = name == 'CONDITION' or block['opcode'] in ['operator_and','operator_or','operator_not']
+                if boolean and len(value)>1 and isinstance(value[1],str):
+                    reporter=blocks[value[1]]
+                    if reporter['opcode']=='data_variable':
+                        field=reporter['fields']['VARIABLE']
+                        reporter.update(opcode='operator_equals',fields={},inputs={'OPERAND1':[3,[12,field[0],field[1]],[10,'0']],'OPERAND2':[1,[10,'1']]})
     compressed=0
     for target in result['targets']:
         blocks=target['blocks'];removed=set()
@@ -107,8 +118,9 @@ def clean(project, *, test_hooks=False):
                     reporter=blocks[value[1]]
                     if reporter['opcode']=='data_variable':
                         field=reporter['fields']['VARIABLE']
-                        # Preserve input kind. Adding a text shadow to a boolean
-                        # socket produces phantom reporter IDs in Scratch GUI.
+                        # Scratch GUI cannot round-trip scalar reporters in
+                        # boolean sockets. Build an explicit comparison instead.
+                        assert not (name == 'CONDITION' or block['opcode'] in ['operator_and', 'operator_or', 'operator_not']), ('Scalar in boolean socket', name, field[0])
                         block['inputs'][name]=[value[0],[12,field[0],field[1]]]+value[2:]
                         removed.add(value[1])
         compressed+=len(removed)

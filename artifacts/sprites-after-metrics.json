@@ -2,11 +2,11 @@
   "sprites": [
     {
       "name": "Game controller",
-      "blocks": 503
+      "blocks": 508
     },
     {
       "name": "Physics",
-      "blocks": 1671
+      "blocks": 1719
     },
     {
       "name": "Track editor",
@@ -14,7 +14,7 @@
     },
     {
       "name": "Menus",
-      "blocks": 1831
+      "blocks": 1914
     },
     {
       "name": "Track codes",
@@ -22,12 +22,12 @@
     },
     {
       "name": "Renderer",
-      "blocks": 2251
+      "blocks": 2315
     },
     {
       "name": "Prompt history",
       "blocks": 2
     }
   ],
-  "simulationFramesPerSecond": 30.165912518853695
+  "simulationFramesPerSecond": 30.410542321338063
 }
