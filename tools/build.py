@@ -108,15 +108,9 @@ def text(t,x,y):return [setv('Text',t),setv('Text X',x),setv('Text Y',y),call('w
 # Static costumes carry actual labels; selected/hover/disabled states are explicit.
 render=[setv('Canvas top',100+79*V('Full play')),setv('Canvas bottom',-153-26*V('Full play')),stmt('pen_clear'),costume_to('blank'),iff(cmp('equals',V('Grid'),1),[color('#e5e1da'),size(1),setv('grid spacing',20),iff(cmp('lt',V('Zoom'),.7),[setv('grid spacing',100)]),setv('grid x',mathop('floor',(V('Camera X')-240/V('Zoom'))/V('grid spacing'))*V('grid spacing')),loop(480/(V('Zoom')*V('grid spacing'))+2,worldline(V('grid x'),V('Camera Y')-150/V('Zoom'),V('grid x'),V('Camera Y')+150/V('Zoom'))+[change('grid x',V('grid spacing'))]),setv('grid y',mathop('floor',(V('Camera Y')-140/V('Zoom'))/V('grid spacing'))*V('grid spacing')),loop(280/(V('Zoom')*V('grid spacing'))+2,worldline(V('Camera X')-240/V('Zoom'),V('grid y'),V('Camera X')+240/V('Zoom'),V('grid y'))+[change('grid y',V('grid spacing'))])]),setv('j',1),size(2),loop(length('LX'),[iff(AND(AND(cmp('gt',L('MaxX',V('j')),V('Camera X')-250/V('Zoom')),cmp('lt',L('MinX',V('j')),V('Camera X')+250/V('Zoom'))),AND(cmp('gt',L('MaxY',V('j')),V('Camera Y')-(130+55*V('Full play'))/V('Zoom')),cmp('lt',L('MinY',V('j')),V('Camera Y')+(140+45*V('Full play'))/V('Zoom')))),[color('#30332f'),iff(cmp('equals',L('Material',V('j')),1),[color('#a66328')]),iff(cmp('equals',L('Material',V('j')),2),[color('#58766d')]),iff(cmp('equals',L('Material',V('j')),3),[color('#b6b1a9')])]+worldline(L('LX',V('j')),L('LY',V('j')),L('LX',V('j'))+L('DX',V('j')),L('LY',V('j'))+L('DY',V('j')))),change('j',1)]),color('#9a433b'),size(2)]
 for a,b in zip(chainids,chainids[1:]):render+=segment(a,b)
-render += [color('#252823'),size(2.5)]
-for part in ['SLED','LEFT_ARM','RIGHT_ARM','LEFT_LEG','RIGHT_LEG']:
- ids=[idx[x] for x in body['parts'][part]]
- render += [color('#78776e' if part in ['LEFT_ARM','LEFT_LEG'] else '#252823'),size(2.2 if part in ['LEFT_ARM','LEFT_LEG'] else 2.5)]
- for a,b in zip(ids,ids[1:]):render+=segment(a,b)
-render+=segment(6,5)
-render += [setv('neck dx',L('X',idx['HEAD'])-L('X',6)),setv('neck dy',L('Y',idx['HEAD'])-L('Y',6)),setv('neck length',mathop('sqrt',V('neck dx')*V('neck dx')+V('neck dy')*V('neck dy'))),iff(cmp('gt',V('neck length'),.001),worldline(L('X',6),L('Y',6),L('X',idx['HEAD'])-V('neck dx')/V('neck length')*1.5,L('Y',idx['HEAD'])-V('neck dy')/V('neck length')*1.5))]
-# Head is drawn as a clipped circle using short geometric edges.
-render += [size(1.2),setv('head x',L('X',idx['HEAD'])),setv('head y',L('Y',idx['HEAD'])),setv('angle',0),loop(12,worldline(V('head x')+1.5*mathop('cos',V('angle')),V('head y')+1.5*mathop('sin',V('angle')),V('head x')+1.5*mathop('cos',V('angle')+30),V('head y')+1.5*mathop('sin',V('angle')+30))+[change('angle',30)])]
+# Artwork follows each simulated bone, including detached limbs.
+from rider_art import draw_rider
+render += draw_rider(globals())
 # Flags and previews are clipped along with terrain.
 render += [iff(cmp('equals',V('Editing'),1),[color('#58766d'),size(1.5)]+worldline(V('Spawn X'),V('Spawn Y')+5,V('Spawn X'),V('Spawn Y')-13)+worldline(V('Spawn X'),V('Spawn Y')-13,V('Spawn X')+6,V('Spawn Y')-10))]+ [iff(cmp('equals',V('Goal enabled'),1),[color('#58766d'),size(2)]+worldline(V('Goal X'),V('Goal Y')+7,V('Goal X'),V('Goal Y')-22)+worldline(V('Goal X'),V('Goal Y')-22,V('Goal X')+9,V('Goal Y')-22)+worldline(V('Goal X')+9,V('Goal Y')-22,V('Goal X')+9,V('Goal Y')-15)+worldline(V('Goal X')+9,V('Goal Y')-15,V('Goal X'),V('Goal Y')-15))]
 render += [iff(AND(cmp('equals',V('Drawing'),1),cmp('equals',V('Tool'),1)),[color('#a66328'),size(1)]+worldline(V('Anchor X'),V('Anchor Y'),V('World X'),V('World Y')))]
