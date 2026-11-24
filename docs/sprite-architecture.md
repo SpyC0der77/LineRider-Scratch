@@ -3,7 +3,7 @@
 | Sprite | Responsibility |
 | --- | --- |
 | Game controller | The only frame loop, input dispatch, Edit/Play transitions, camera and playback controls. |
-| Physics | Sled and rider points, mounted constraints, ragdoll, collisions, spatial grid and run results. |
+| Physics | Sled and rider points, collisions, spatial grid, run results and timeline snapshots. |
 | Track editor | Pencil, line, eraser, mobile gap repair, flags, saved slot, undo/redo and track operations. |
 | Menus | Dropdown input, toolbar actions, keyboard navigation and mode-change confirmations. |
 | Track codes | LR1 encoding, validation, staged import and Scratch's native answer prompt. |
@@ -14,9 +14,9 @@ Stage retains the variables and lists shared by these systems. Its short input s
 
 ## Calls and frame order
 
-Custom blocks remain local to their sprite. A call to a procedure in another sprite becomes `broadcast and wait`, with a message named after its destination and procedure, such as `Physics / advance ride`. Each exported procedure has its own receiver. The receiver calls the local implementation. Do not replace these messages with ordinary broadcasts or add another forever loop.
+Custom blocks remain local to their sprite. A call to a procedure in another sprite becomes `broadcast and wait`, with a message named after its destination and procedure, such as `Physics / update timeline`. Each exported procedure has its own receiver. The receiver calls the local implementation.
 
-Each frame handles input and track changes, advances physics when playing, updates the camera, and asks Renderer to draw. Renderer clears the shared pen layer once, draws the scene, draws the controls when visible, and finishes with overlays. Rendering supplies the redraw boundary. An extra timed wait in the controller adds an unnecessary frame delay.
+Each tick handles input and track changes, computes any pending timeline frames in a short batch, then reads the selected pose and updates the camera. The solver retains its own state between batches. A change to track geometry or flags invalidates the cache. The selected frame number survives that rebuild. Playback advances through cached frames. Renderer clears the shared pen layer once, draws the scene and controls, and finishes with overlays. Rendering supplies the redraw boundary.
 
 The solver iterations, collision queries, track serialization loops and drawing operations run inside local custom blocks with "run without screen refresh" enabled. Wrappers that wait for another sprite have that option disabled. The compiler outlines consecutive local operations into warp batches so large loops still finish within one operation. Keeping a message wait inside a warp procedure can stall the receiver; disabling warp on the entire operation can make a large loop take one display frame per iteration.
 

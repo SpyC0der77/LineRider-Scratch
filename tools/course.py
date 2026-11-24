@@ -1,13 +1,19 @@
-"""Long rolling descent with broad bowls and progressively larger hills."""
-import math
+"""A physical launch lip, short drop, and braked catch runway."""
 
+def approach_height(x):
+ return 28+.3*x
 
 def course_height(x):
- return 28 + .24*x + 18*math.sin(x/180) + 32*(1-math.cos(x/300)) + 12*(1-math.cos(x/95))
+ return approach_height(x) if x<=350 else approach_height(350)+8+.3*(x-350)
 
-DEFAULT_GOAL=(3100,course_height(3100))
-
+DEFAULT_SPAWN=(0,approach_height(0)-6)
+DEFAULT_GOAL=(1050,course_height(1050))
 
 def default_track():
- xs=range(-100,3201,8)
- return [(x,course_height(x),x+8,course_height(x+8),0) for x in xs if x<3200]
+ xs=list(range(-100,350,4))+[350]
+ lines=[(a,approach_height(a),b,approach_height(b),0) for a,b in zip(xs,xs[1:])]
+ # This upward-oriented lip contacts the sled runner before the rider reaches it.
+ lines.append((350,approach_height(350)+1,350,approach_height(350)-.1,0))
+ # Reverse boost slows the sled just enough for the airborne rider to meet it.
+ lines += [(x,course_height(x),x+4,course_height(x+4),5 if 392<=x<408 else 0) for x in range(354,1200,4)]
+ return lines

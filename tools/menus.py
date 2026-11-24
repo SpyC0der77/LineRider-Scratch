@@ -6,16 +6,17 @@ def define_controls(api):
  editing_on=cmp('equals',V('Editing'),1)
  proc('select edit mode',[iff(editing_off,[call('edit track')])])
  proc('select play mode',[iff(editing_on,[call('prepare paused preview')])])
- proc('toggle finish goal',[iff(editing_on,[call('begin change'),setv('Goal enabled',1-V('Goal enabled'))])])
+ proc('toggle finish goal',[iff(editing_on,[call('begin change'),setv('Goal enabled',1-V('Goal enabled')),setv('Timeline restart',1)])])
  proc('zoom in',[setv('Zoom',V('Zoom')*1.25),iff(cmp('gt',V('Zoom'),5),[setv('Zoom',5)])])
  proc('zoom out',[setv('Zoom',V('Zoom')/1.25),iff(cmp('lt',V('Zoom'),.15),[setv('Zoom',.15)])])
  proc('toggle grid',[setv('Grid',1-V('Grid'))])
- proc('detach rider',[iff(editing_off,[setv('Mounted',0)])])
+ at_end=cmp('gt',V('State'),2)
+ step_disabled=OR(cmp('equals',V('Playing'),1),at_end)
  proc('toggle help',[setv('Help',1-V('Help'))])
  def row(label,shortcut='',action=None,disabled=None,checked=None,alt=None,edit_action=None):return dict(edit_action=edit_action,label=label,shortcut=shortcut,action=action or [],can_disable=disabled is not None,checkable=checked is not None,disabled=disabled or cmp('equals',0,1),checked=checked or cmp('equals',0,1),alt=alt)
  menus=[
   dict(id=1,x=8,top=36,w=208,rows=[row('New track',edit_action=1),row('Demo course',edit_action=2),None,row('Save slot','S',edit_action=3),row('Load saved slot','L',disabled=cmp('equals',V('Saved exists'),0),edit_action=4),None,row('Remove goal',alt='Restore goal',edit_action=5),None,row('Save track code',action=[call('save track code')]),row('Load track code',edit_action=9)]),
-  dict(id=2,x=70,top=36,w=202,rows=[row('Undo','Z',disabled=cmp('equals',length('Undo Count'),0),edit_action=6),row('Redo','Y',disabled=cmp('equals',length('Redo Count'),0),edit_action=7),None,row('Step one frame','N',[call('step once')],OR(cmp('equals',V('Playing'),1),OR(cmp('equals',V('State'),4),AND(cmp('equals',V('State'),3),cmp('equals',V('Crash complete'),1))))),row('Detach rider','X',[call('detach rider')],editing_on),row('Return to editor','E',disabled=editing_on,edit_action=8)]),
+  dict(id=2,x=70,top=36,w=202,rows=[row('Undo','Z',disabled=cmp('equals',length('Undo Count'),0),edit_action=6),row('Redo','Y',disabled=cmp('equals',length('Redo Count'),0),edit_action=7),None,row('Step one frame','N',[call('step once')],step_disabled),row('Detach rider','X',[call('detach rider')],OR(editing_on,OR(at_end,cmp('equals',V('Timeline ready'),0)))),row('Return to editor','E',disabled=editing_on,edit_action=8)]),
   dict(id=3,x=126,top=36,w=208,rows=[row('Zoom in','+',[call('zoom in')]),row('Zoom out','-',[call('zoom out')]),row('Fit track','F',[call('fit track')]),row('Start view','H',[call('home view')],editing_off),None,row('Grid and snapping','G',[call('toggle grid')],checked=cmp('equals',V('Grid'),1))]),
   dict(id=4,x=184,top=36,w=190,rows=[row('Controls and storage',action=[call('toggle help')])]),
   dict(id=5,x=8,top=76,w=196,rows=[row(label,str(i+1),[setv('Tool',i)],editing_off,cmp('equals',V('Tool'),i)) for i,label in enumerate(['Pencil','Straight line','Eraser','Pan','Start flag','Goal flag'])]),
@@ -28,7 +29,7 @@ def define_controls(api):
   menu['h']=y-menu['top']+6;menu['count']=index
  controls=[
   dict(name='track',label='Track',x=8,y=7,w=56,h=26,menu=1),dict(name='edit',label='Edit',x=70,y=7,w=50,h=26,menu=2),dict(name='view',label='View',x=126,y=7,w=52,h=26,menu=3),dict(name='help',label='Help',x=184,y=7,w=50,h=26,menu=4),
-  dict(name='play',label='Run',x=284,y=43,w=188/3,h=26,action=[call('play or pause')]),dict(name='retry',label='Retry',x=284+188/3,y=43,w=188/3,h=26,action=[call('retry')]),dict(name='mode',label='Step',x=284+376/3,y=43,w=188/3,h=26,action=[call('step once')],disabled=OR(cmp('equals',V('Playing'),1),OR(cmp('equals',V('State'),4),AND(cmp('equals',V('State'),3),cmp('equals',V('Crash complete'),1))))),
+  dict(name='play',label='Run',x=284,y=43,w=188/3,h=26,action=[call('play or pause')]),dict(name='retry',label='Retry',x=284+188/3,y=43,w=188/3,h=26,action=[call('retry')]),dict(name='mode',label='Step',x=284+376/3,y=43,w=188/3,h=26,action=[call('step once')],disabled=step_disabled),
   dict(name='edit-mode',label='Edit',x=284,y=7,w=94,h=26,action=[call('select edit mode')]),dict(name='play-mode',label='Play',x=378,y=7,w=94,h=26,action=[call('select play mode')]),
   dict(name='full-play',label='Fullscreen',x=244,y=5,w=32,h=32,action=[call('toggle full play')],disabled=editing_on),
   dict(name='tool',label='Pencil',x=8,y=43,w=124,h=26,menu=5,disabled=editing_off),dict(name='material',label='Normal',x=142,y=43,w=114,h=26,menu=6,disabled=editing_off)]
@@ -89,7 +90,7 @@ def render_controls(api):
   if c.get('disabled') is not None:out += [iff(c['disabled'],[setv('button state','disabled')])]
   out += stamp(cat('control ',name,' ',V('button label'),' ',V('button state')),c['x']+c['w']/2-240,180-c['y']-c['h']/2)
  # Mode, connector bus and transport share one SVG so their strokes meet exactly.
- out += [setv('Mode selected','edit'),setv('Assembly hover',0),setv('Transport running',0),setv('Transport disabled',0),iff(cmp('equals',V('Editing'),0),[setv('Mode selected','play')]),iff(hit(284,7,94,26),[setv('Assembly hover',1)]),iff(hit(378,7,94,26),[setv('Assembly hover',2)]),iff(cmp('equals',V('Playing'),1),[setv('Transport running',1)]),iff(OR(cmp('equals',V('Playing'),1),OR(cmp('equals',V('State'),4),AND(cmp('equals',V('State'),3),cmp('equals',V('Crash complete'),1)))),[setv('Transport disabled',1)])]
+ out += [setv('Mode selected','edit'),setv('Assembly hover',0),setv('Transport running',0),setv('Transport disabled',0),iff(cmp('equals',V('Editing'),0),[setv('Mode selected','play')]),iff(hit(284,7,94,26),[setv('Assembly hover',1)]),iff(hit(378,7,94,26),[setv('Assembly hover',2)]),iff(cmp('equals',V('Playing'),1),[setv('Transport running',1)]),iff(OR(cmp('equals',V('Playing'),1),cmp('gt',V('State'),2)),[setv('Transport disabled',1)])]
  for i in range(3):out += [iff(hit(284+i*188/3,43,188/3,26),[setv('Assembly hover',i+3)])]
  out += stamp(cat('play assembly ',V('Mode selected'),' ',V('Transport running'),' ',V('Transport disabled'),' ',V('Assembly hover')),138,142)
  out += [iff(cmp('equals',V('Editing'),0),stamp('control full-play Fullscreen normal',20,159))]

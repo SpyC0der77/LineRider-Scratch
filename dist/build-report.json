@@ -1,7 +1,7 @@
 {
-  "blocks_before": 22920,
-  "blocks_after": 15875,
-  "compressed_variable_reporters": 7298,
+  "blocks_before": 23402,
+  "blocks_after": 16326,
+  "compressed_variable_reporters": 7219,
   "unused_procedures": [
     "new or edit",
     "request demo track",
@@ -9,23 +9,23 @@
     "request new track",
     "request toggle finish goal"
   ],
-  "removed_variables": 9,
-  "removed_lists": 0,
+  "removed_variables": 19,
+  "removed_lists": 1,
   "orphaned_blocks": 0,
   "test_hooks": false,
   "modules": {
     "sprites": {
-      "Stage": 291,
-      "Game controller": 540,
-      "Physics": 1719,
-      "Track editor": 1252,
-      "Menus": 1943,
-      "Track codes": 600,
-      "Renderer": 9528,
+      "Stage": 295,
+      "Game controller": 653,
+      "Physics": 3074,
+      "Track editor": 1230,
+      "Menus": 1939,
+      "Track codes": 601,
+      "Renderer": 8532,
       "Prompt history": 2
     },
-    "cross_sprite_call_sites": 74,
-    "exported_requests": 48,
+    "cross_sprite_call_sites": 54,
+    "exported_requests": 42,
     "shared_state": "Stage",
     "frame_loop_owner": "Game controller",
     "pen_layer_owner": "Renderer"

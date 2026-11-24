@@ -20,9 +20,8 @@ def draw_rider(api):
  out+=ring(13,-2.5,2.5,.75)+ring(13,-2.5,2.5,.28,'#ffffff')
  out+=path([(0,0),(0,-5),(-1,-5)],.65)+path([(0,0),(0,-5),(-1,-5)],.22,'#ffffff')
  out+=path([(0,-4),(13,0)],.3)
- # The rope meets the curled runner rather than extending into empty space.
- rope=pt(15.5,-2.5)
- out+=stroke([(L('X',idx['RHAND']),L('Y',idx['RHAND'])),rope],.18)
+ # Draw the simulated rope, including its free end after a hand lets go.
+ out+=stroke([(L('X',idx['STRING']),L('Y',idx['STRING'])),(L('X',idx['ROPE_END']),L('Y',idx['ROPE_END']))],.18)
  def polygon(coords,fill='#ffffff',outline=.25):
   # Fill with clipped pen spans so artwork obeys the same canvas bounds.
   seq=[]
@@ -34,20 +33,18 @@ def draw_rider(api):
    cross.sort()
    for left,right in zip(cross[::2],cross[1::2]):seq+=path([(left,y),(right,y)],.14,fill)
   return seq+path(coords+[coords[0]],outline)
- # Each trouser leg is one straight taper from the seat to the ankle.
- # Knee simulation points remain available to the crash solver but do not draw.
- for foot in ['LFOOT','RFOOT']:
-  out+=frame(5,idx[foot])
-  out+=polygon([(0,-.68),(0,.68),(6.1,.43),(6.1,-.43)],'#000000',.16)
-  out+=frame(idx[foot],5)
+ # Draw the two physical leg bones, including their live knee positions.
+ for knee,foot in [('LKNEE','LFOOT'),('RKNEE','RFOOT')]:
+  out+=stroke([(L('X',5),L('Y',5)),(L('X',idx[knee]),L('Y',idx[knee])),(L('X',idx[foot]),L('Y',idx[foot]))],1.25)
+  out+=frame(idx[foot],idx[knee])
   out+=polygon([(1.35,-.5),(-.4,-.5),(-.4,1.35),(.12,1.35),(.55,.5),(1.35,.5)])
  # Broad white coat, black back edge and a straight black sleeve.
  out+=frame(5,6)
  out+=polygon([(-.1,-.65),(5.8,-.65),(5.8,.95),(.2,.75)],'#ffffff',.24)
  out+=path([(.1,-.62),(5.7,-.62)],.48)
- for hand in ['LHAND','RHAND']:
-  out+=stroke([(L('X',6),L('Y',6)),(L('X',idx[hand]),L('Y',idx[hand]))],1.3)
-  out+=frame(idx[hand],6)
+ for elbow,hand in [('LELBOW','LHAND'),('RELBOW','RHAND')]:
+  out+=stroke([(L('X',6),L('Y',6)),(L('X',idx[elbow]),L('Y',idx[elbow])),(L('X',idx[hand]),L('Y',idx[hand]))],1.3)
+  out+=frame(idx[hand],idx[elbow])
   out+=polygon([(1.25,-.57),(-.15,-.57),(-.4,-.3),(-.4,.35),(-.12,.55),(1.25,.55)],'#ffffff',.22)
  # Scarf retains the existing flutter simulation and reference colors.
  scarf=['#3898ed','#00a51b','#ff5340']

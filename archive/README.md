@@ -44,5 +44,34 @@ Every recovered `.sb3` is preserved unchanged, with its exact executable Scratch
 | [v037-multiple-sprites](v037-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v038-multiple-sprites](v038-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
 | [v039-multiple-sprites](v039-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v040-multiple-sprites](v040-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v041-multiple-sprites](v041-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v042-multiple-sprites](v042-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v043-multiple-sprites](v043-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v044-multiple-sprites](v044-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v045-multiple-sprites](v045-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v046-multiple-sprites](v046-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v047-multiple-sprites](v047-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v048-multiple-sprites](v048-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v049-multiple-sprites](v049-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v050-multiple-sprites](v050-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v051-multiple-sprites](v051-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v052-multiple-sprites](v052-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v053-multiple-sprites](v053-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v054-multiple-sprites](v054-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v055-multiple-sprites](v055-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v056-multiple-sprites](v056-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v057-multiple-sprites](v057-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v058-multiple-sprites](v058-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v059-multiple-sprites](v059-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v060-multiple-sprites](v060-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v061-multiple-sprites](v061-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v062-multiple-sprites](v062-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v063-multiple-sprites](v063-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v064-multiple-sprites](v064-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v065-multiple-sprites](v065-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v066-multiple-sprites](v066-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v067-multiple-sprites](v067-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
+| [v068-multiple-sprites](v068-multiple-sprites/README.md) | dist\Line Rider.sb3 | Native + Python |
 
 `python tools/build.py` archives each distinct new build automatically. Existing snapshots are never overwritten.

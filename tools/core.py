@@ -64,11 +64,8 @@ pts=[p for p in body['states'] if p['type']!='Binding'];idx={p['id']:i+1 for i,p
 for k in ['X','Y','PX','PY','VX','VY','Friction','Air','Initial X','Initial Y']:lists[k]=[k,[]]
 for p in pts:
  for k,val in [('X',p['x']),('Y',p['y']),('PX',p['x']-.4),('PY',p['y']),('VX',.4),('VY',0),('Friction',p.get('friction',0)),('Air',p.get('airFriction',0)),('Initial X',p['x']),('Initial Y',p['y'])]:lists[k][1].append(val)
-cons=[c for c in body['constraints'] if c['type'] in ['Stick','BindStick','RepelStick']]
-for k in ['CA','CB','Rest','Kind','Endurance']:lists[k]=[k,[]]
-for c in cons:
- a,b=idx[c['p1']],idx[c['p2']];r=math.hypot(pts[a-1]['x']-pts[b-1]['x'],pts[a-1]['y']-pts[b-1]['y'])*c.get('lengthFactor',1)
- for k,v in [('CA',a),('CB',b),('Rest',r),('Kind',{'Stick':0,'BindStick':1,'RepelStick':2}[c['type']]),('Endurance',c.get('endurance',0)*r*.5)]:lists[k][1].append(v)
+# Only the six rigid sled distances survive from the original bindings.
+cons=[c for c in body['constraints'] if c['type']=='Stick' and idx[c['p1']]<=4 and idx[c['p2']]<=4]
 from course import default_track
 tracks=default_track()
 for k in ['LX','LY','DX','DY','NX','NY','InvSq','Material','MinX','MaxX','MinY','MaxY']:lists[k]=[k,[]]
@@ -76,26 +73,3 @@ for x,y,xx,yy,m in tracks:
  dx,dy=xx-x,yy-y;le=math.hypot(dx,dy)
  for k,v in [('LX',x),('LY',y),('DX',dx),('DY',dy),('NX',-dy/le),('NY',dx/le),('InvSq',1/le**2),('Material',m),('MinX',min(x,xx)-10),('MaxX',max(x,xx)+10),('MinY',min(y,yy)-10),('MaxY',max(y,yy)+10)]:lists[k][1].append(v)
 lists['Candidates']=['Candidates',[]]
-proc('reset rider',[setv('i',1),loop(len(pts),[replace('X',V('i'),L('Initial X',V('i'))+V('Spawn X')),replace('Y',V('i'),L('Initial Y',V('i'))+V('Spawn Y')),replace('PX',V('i'),L('Initial X',V('i'))+V('Spawn X')-.4),replace('PY',V('i'),L('Initial Y',V('i'))+V('Spawn Y')),replace('VX',V('i'),.4),replace('VY',V('i'),0),replace('Air',V('i'),L('Initial air',V('i'))),change('i',1)]),setv('Ragdoll active',0),setv('Ragdoll sleep frames',0),setv('Ragdoll speed squared',0),setv('Crash complete',0),setv('Preserve contact velocity',0),setv('Mounted',1),setv('Sled intact',1),setv('Frame',0),setv('Camera X',0),setv('Camera Y',0),call('update ragdoll pose'),call('begin ragdoll contacts')])
-proc('integrate points',[setv('i',1),loop(len(pts),[iff(OR(cmp('lt',V('i'),18),cmp('equals',V('Ragdoll active'),1)),[setv('vx',(L('X',V('i'))-L('PX',V('i')))*(1-L('Air',V('i')))),setv('vy',(L('Y',V('i'))-L('PY',V('i')))*(1-L('Air',V('i')))+.175),replace('VX',V('i'),V('vx')),replace('VY',V('i'),V('vy')),replace('PX',V('i'),L('X',V('i'))),replace('PY',V('i'),L('Y',V('i'))),replace('X',V('i'),L('X',V('i'))+V('vx')),replace('Y',V('i'),L('Y',V('i'))+V('vy'))]),change('i',1)])])
-solve=[setv('a',L('CA',V('c'))),setv('b',L('CB',V('c'))),setv('dx',L('X',V('a'))-L('X',V('b'))),setv('dy',L('Y',V('a'))-L('Y',V('b'))),setv('distance',mathop('sqrt',V('dx')*V('dx')+V('dy')*V('dy'))),iff(cmp('gt',V('distance'),0),[setv('diff',(V('distance')-L('Rest',V('c')))/V('distance')*.5),iff(AND(cmp('equals',L('Kind',V('c')),1),cmp('gt',V('diff'),L('Endurance',V('c')))),[setv('Mounted',0)],[iff(OR(cmp('lt',L('Kind',V('c')),2),cmp('lt',V('distance'),L('Rest',V('c')))),[replace('X',V('a'),L('X',V('a'))-V('dx')*V('diff')),replace('Y',V('a'),L('Y',V('a'))-V('dy')*V('diff')),replace('X',V('b'),L('X',V('b'))+V('dx')*V('diff')),replace('Y',V('b'),L('Y',V('b'))+V('dy')*V('diff'))])])])]
-proc('solve sticks',[setv('c',1),loop(len(cons),[iff(OR(cmp('equals',L('Kind',V('c')),0),OR(cmp('equals',L('Kind',V('c')),2),cmp('equals',V('Mounted'),1))),solve),change('c',1)])])
-contact=[setv('ox',L('X',V('i'))-L('LX',V('j'))),setv('oy',L('Y',V('i'))-L('LY',V('j'))),setv('depth',V('ox')*L('NX',V('j'))+V('oy')*L('NY',V('j'))),setv('along',(V('ox')*L('DX',V('j'))+V('oy')*L('DY',V('j')))*L('InvSq',V('j'))),iff(AND(AND(cmp('gt',V('depth'),0),cmp('lt',V('depth'),10)),AND(AND(cmp('gt',V('along'),-.000001),cmp('lt',V('along'),1.000001)),cmp('gt',L('NX',V('j'))*L('VX',V('i'))+L('NY',V('j'))*L('VY',V('i')),0))),[replace('X',V('i'),L('X',V('i'))-L('NX',V('j'))*V('depth')),replace('Y',V('i'),L('Y',V('i'))-L('NY',V('j'))*V('depth')),setv('friction factor',1),iff(cmp('equals',L('Material',V('j')),2),[setv('friction factor',0)]),setv('fx',L('NY',V('j'))*L('Friction',V('i'))*V('friction factor')*V('depth')),setv('fy',0-L('NX',V('j'))*L('Friction',V('i'))*V('friction factor')*V('depth')),iff(cmp('gt',L('PX',V('i')),L('X',V('i'))-.0000001),[setv('fx',0-V('fx'))]),iff(cmp('lt',L('PY',V('i')),L('Y',V('i'))),[setv('fy',0-V('fy'))]),replace('PX',V('i'),L('PX',V('i'))+V('fx')),replace('PY',V('i'),L('PY',V('i'))+V('fy')),iff(cmp('equals',L('Material',V('j')),1),[setv('tangent speed',(L('X',V('i'))-L('PX',V('i')))*L('NY',V('j'))-(L('Y',V('i'))-L('PY',V('i')))*L('NX',V('j'))),replace('PX',V('i'),L('PX',V('i'))+L('NY',V('j'))*V('tangent speed')*.08),replace('PY',V('i'),L('PY',V('i'))-L('NX',V('j'))*V('tangent speed')*.08)])])]
-# Match lr-core AccLine's 0.1 directed tangent applied to previous position.
-for material,direction in [(4,1),(5,-1)]:
- contact[-1][2].append(iff(cmp('equals',L('Material',V('j')),material),[
-  replace('PX',V('i'),L('PX',V('i'))-L('NY',V('j'))*.1*direction),
-  replace('PY',V('i'),L('PY',V('i'))+L('NX',V('j'))*.1*direction)]))
-# Noniterating bind joints and scarf chain.
-end=[]
-for c in body['constraints']:
- if c['type']=='BindJoint':
-  a,b,q,r=[idx[c[k]] for k in ['p1','p2','q1','q2']]
-  cross=(L('X',b)-L('X',a))*(L('Y',r)-L('Y',q))-(L('Y',b)-L('Y',a))*(L('X',r)-L('X',q))
-  end+=[iff(cmp('lt',cross,0),[setv('Mounted' if c['binding']=='RIDER_MOUNTED' else 'Sled intact',0)])]
-chainids=[idx[x] for x in body['parts']['SCARF']]
-for a,b in zip(chainids,chainids[1:]):
- rest=math.hypot(pts[a-1]['x']-pts[b-1]['x'],pts[a-1]['y']-pts[b-1]['y'])
- end += [setv('dx',L('X',a)-L('X',b)),setv('dy',L('Y',a)-L('Y',b)),setv('distance',mathop('sqrt',V('dx')*V('dx')+V('dy')*V('dy'))),iff(cmp('gt',V('distance'),0),[setv('diff',(V('distance')-rest)/V('distance')),replace('X',b,L('X',b)+V('dx')*V('diff')),replace('Y',b,L('Y',b)+V('dy')*V('diff'))])]
-proc('finish frame',end)
-proc('physics frame',[iff(cmp('equals',V('Ragdoll active'),1),[call('begin ragdoll contacts')]),call('integrate points'),loop(6+V('Ragdoll active')*2,[call('solve sticks'),iff(cmp('equals',V('Ragdoll active'),1),[call('solve ragdoll')]),call('collide points with lines')]),iff(cmp('equals',V('Ragdoll active'),1),[call('resolve ragdoll velocities')]),call('finish frame'),iff(cmp('equals',V('Ragdoll active'),0),[call('update ragdoll pose'),iff(cmp('equals',V('Mounted'),0),[call('activate ragdoll')])]),change('Frame',1)])

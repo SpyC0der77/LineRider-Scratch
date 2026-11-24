@@ -15,14 +15,17 @@ ROLES = {
         'restore edit camera','home view','edit track','start run','play or pause',
         'retry','prepare paused preview','step once','pointer down','keyboard',
         'keyboard normal','editor keyboard','select edit mode','select play mode',
-        'toggle full play','full play pointer',
+        'toggle full play','full play pointer','start timeline scrub','scrub timeline',
+        'show timeline frame','read timeline frame','follow rider','keep rider visible',
+        'clear timeline detach','detach rider',
     },
     'Physics': {
-        'reset rider','integrate points','solve sticks','finish frame','physics frame',
-        'collide points with lines','build spatial grid','nearby lines','follow rider',
-        'check result','advance ride','detach rider','solve ragdoll','update ragdoll pose',
-        'resolve ragdoll velocities','ragdoll circle contact','activate ragdoll',
-        'begin ragdoll contacts','project ragdoll contacts',
+        'reset rider','integrate points','physics frame','solve body bones','damp sled rotation',
+        'solve joint limits','sled coordinate frame','solve elastic grips',
+        'solve rider balance','body sled contact','solve sled contacts',
+        'terrain circle contact','solve scarf','observe rider contacts',
+        'collide points with lines','build spatial grid','nearby lines',
+        'check result','update timeline','record timeline frame',
     },
     'Track editor': {
         'begin change','push Undo','push Redo','restore Undo','restore Redo','undo','redo',
@@ -52,7 +55,7 @@ ROLES = {
 }
 PURPOSE = {
     'Game controller': 'Owns the only frame loop, input dispatch, camera, and Play/Edit state. Waits for physics and rendering before starting the next frame.',
-    'Physics': 'Rider, sled, ragdoll, line collisions, and the spatial grid. Every solver iteration and nearby-line query is a local custom-block call.',
+    'Physics': 'Rider, sled, collisions, spatial grid and cached timeline frames. Solver iterations and snapshot writes are local custom-block calls.',
     'Track editor': 'Drawing, erasing, touch gap repair, flags, track mutations, saved slot, and undo/redo.',
     'Menus': 'Dropdown input, keyboard navigation, toolbar dispatch, and mode-change confirmations. Rendering belongs to Renderer.',
     'Track codes': 'Compact LR1 serialization, staged validation, import, and native answer prompts.',

@@ -13,7 +13,7 @@ def define_input(api):
     proc('full play pointer',[
         iff(hit(440,8,32,32),[call('toggle full play')]),
         iff(AND(cmp('equals',V('Playing'),0),AND(cmp('lt',V('State'),3),hit(204,148,72,64))),[call('play or pause')]),
-        iff(OR(cmp('equals',V('State'),4),AND(cmp('equals',V('State'),3),cmp('equals',V('Crash complete'),1))),[
+        iff(cmp('gt',V('State'),2),[
             iff(hit(152,273,82,32),[call('retry')]),iff(hit(246,273,82,32),[call('select edit mode')])])])
 
 
@@ -21,7 +21,7 @@ def render(api):
     globals().update(api)
     return stamp('exit full play',216,156)+[
         iff(AND(cmp('equals',V('Playing'),0),cmp('lt',V('State'),3)),stamp('full play resume',0,0)),
-        iff(OR(cmp('equals',V('State'),4),AND(cmp('equals',V('State'),3),cmp('equals',V('Crash complete'),1))),
+        iff(cmp('gt',V('State'),2),
             stamp('full play result',0,-119)+text(cat('Frame ',V('Frame'),'   ',mathop('round',V('Frame')/30*100)/100,'s'),-64,-144))]
 
 

@@ -1,0 +1,71 @@
+{
+  "results": [
+    {
+      "name": "Release playback recorded at normal speed, then idle after finish",
+      "pass": true,
+      "seconds": 7.751,
+      "frame": 232,
+      "fps": 29.931621726228872
+    },
+    {
+      "name": "Repeated release run 1",
+      "pass": true,
+      "seconds": 7.741,
+      "frame": 232
+    },
+    {
+      "name": "Repeated release run 2",
+      "pass": true,
+      "seconds": 7.688,
+      "frame": 232
+    },
+    {
+      "name": "Pause near launch, wait, mouse/keyboard step, camera change and resume",
+      "pass": true,
+      "seconds": 11.1,
+      "pausedAt": 108,
+      "steps": 19
+    },
+    {
+      "name": "Fresh frame-by-frame recording and exact native/reference comparison",
+      "pass": true,
+      "seconds": 51.28,
+      "frames": 232,
+      "maxPositionError": "<1e-7"
+    },
+    {
+      "name": "Fullscreen entered while airborne, stepped, exited and resumed",
+      "pass": true,
+      "seconds": 9.005,
+      "airborneSteps": 10
+    },
+    {
+      "name": "Actual X crash during flight stays terminal; N is disabled after stop; Retry works",
+      "pass": true,
+      "seconds": 18.667,
+      "crashStopsAt": 301,
+      "retryFinishesAt": 232
+    }
+  ],
+  "recordings": [
+    {
+      "name": "normal-playback",
+      "width": 480,
+      "height": 360,
+      "mime": "video/webm;codecs=vp9"
+    },
+    {
+      "name": "pause-step-resume",
+      "width": 480,
+      "height": 360,
+      "mime": "video/webm;codecs=vp9"
+    },
+    {
+      "name": "terminal-crash",
+      "width": 480,
+      "height": 360,
+      "mime": "video/webm;codecs=vp9"
+    }
+  ],
+  "errors": []
+}

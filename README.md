@@ -1,12 +1,12 @@
 # Line Rider in Scratch
 
-Open [dist/Line Rider.sb3](dist/Line%20Rider.sb3) in Scratch using **File > Load from your computer**, then click the green flag. The project opens in the track editor. Click **Run** to ride the sample course. The **Edit / Play** switch is one joined control in the upper right. Run/Pause, Retry and Step form a shared toolbar below it, connected to the Play half. The switch selects the mode: Play opens a paused preview, and Edit stops the run and restores your editing camera and zoom. Selecting the active mode again does not reset it. Track, Edit, View and Help are dropdown menus; the second row selects the active tool and material. Use Scratch's fullscreen stage for larger controls.
+Open [dist/Line Rider.sb3](dist/Line%20Rider.sb3) in Scratch using **File > Load from your computer**, then click the green flag. The project opens in Edit and calculates the demo ride. Drag the timeline at the bottom to inspect any frame, or click **Run** to play from the selected frame. The **Edit / Play** switch keeps the playhead in place. Track, Edit, View and Help are dropdown menus. The second row selects the active tool and material. Use Scratch's fullscreen stage for larger controls.
 
-The opening track and **Track > Demo course** now use a 3,300-unit rolling descent with 413 normal segments, broad bowls and smaller rolling hills. The goal is at x=3,100. The numerical rider simulation reaches it seated at frame 348. `tracks/current.json` retains the previous owner's canvas as a backup.
+The opening track and **Track > Demo course** use a physical launch lip, short drop and sloping catch. The rider is always an articulated physical body. A finite seat, deck and rear post collide with the body, and elastic rope grips yield with stretch. The rider clears the sled, physically returns and finishes seated. `Mounted` reports seat proximity and posture for the finish condition. `tracks/current.json` retains the previous owner's canvas as a backup.
 
 The interface starts in mobile mode, with touch instructions and no keyboard shortcuts. Pressing any key on the stage switches to desktop mode. Typing into the track-code answer box does not switch modes. Mobile erasing repairs one skipped segment only when its connected neighbors were removed less than 350 ms apart during the same drag. It checks the original endpoints and stable segment IDs, so unrelated lines and separate gestures do not bridge. Undo restores the entire erase gesture.
 
-In Play, the expand icon beside the Edit / Play selector opens an uninterrupted view across the full Scratch stage. It hides the toolbars and status bar and expands the drawing bounds. The small corner icon returns without resetting the ride. A paused ride has a touch Play button; after a fall settles, touch Retry or Edit. This is the game's fullscreen stage view; Scratch's own fullscreen control can enlarge the player window.
+In Play, the expand icon beside the Edit / Play selector opens an uninterrupted view across the full Scratch stage. It hides the toolbars and timeline and expands the drawing bounds. The small corner icon returns to the current frame. A paused ride has a touch Play button. At the end, touch Retry or Edit. Scratch's own fullscreen control enlarges the player window.
 
 ## Editor
 
@@ -36,16 +36,18 @@ Click a menu item to choose it. Disabled actions are muted. Click outside a menu
 
 Stroke ends snap to nearby existing endpoints. Lines are one-sided and automatically oriented left to right, so their riding surface faces upward. The tool preserves upward-facing normals when drawing from right to left. Vertical walls have a direction-dependent collision side.
 
-Normal lines use the original point-friction model. Grip lines add damping along the track tangent. Ice disables point friction. Scenery is visible but does not collide. Acceleration adds the original lr-core 0.1 tangent boost on contact; Reverse boost applies it in the opposite direction. Acceleration lines are red and retain their material in saved codes. The renderer clips all terrain and rider strokes to the canvas, including very long offscreen lines.
+Normal lines apply contact friction. Grip lines add damping along the track tangent. Ice disables point friction. Scenery is visible but does not collide. Acceleration adds the original lr-core 0.1 tangent boost on contact; Reverse boost applies it in the opposite direction. Acceleration lines are red and retain their material in saved codes. The renderer clips all terrain and rider strokes to the canvas, including very long offscreen lines.
 
 ## Playback
 
-- **Run / Space** starts a run; click again to pause or resume.
-- **Step / N**, also available under Edit, advances exactly one physics frame and stays paused. Step remains available for repeated clicks. The first step preserves the editor camera; the status bar shows the frame number and elapsed time. A paused ragdoll can also be stepped frame by frame. Step is disabled during playback and once the fall or run has finished.
-- **Retry / R** restarts the run. In the editor it returns to the start view.
-- **Edit > Return to editor / E** returns to editing and preserves the camera position from before the run.
-- **X** detaches the rider for a crash test.
-- Elapsed simulation time, speed, segment count and zoom appear in the status bar.
+- **Timeline** pauses playback and moves to the frame under the pointer. It works in Edit and Play. The last frame is the first crash or the mounted crossing of the goal.
+- The timeline recalculates when you release a stroke or finish moving a flag. The spinner appears during recalculation. If the edited ride ends sooner, the playhead shows that end. Undo can bring the original frame back into range.
+- **Run / Space** plays from the selected frame, or starts over from the end. Click again to pause.
+- **Step / N** advances one frame and stays paused. Step is disabled during playback and at the end.
+- **Retry / R** returns to frame zero. In Edit it also restores the start view. In Play it starts playback.
+- **Edit > Return to editor / E** stops playback at the current frame so you can edit with the rider in view.
+- **X** detaches the rider for a crash test. Retry restores the original run.
+- A ride with no earlier finish or crash can reach Scratch's storage limit at frame 8,694. The status bar labels that endpoint **Preview limit**.
 
 ## Keeping your tracks
 
@@ -61,7 +63,7 @@ New and Demo preserve the saved slot. The green flag resets the editor and run s
 
 ## Build and verification
 
-The native project is divided into **Game controller**, **Physics**, **Track editor**, **Menus**, **Track codes**, and **Renderer**, plus the existing **Prompt history** sprite. Each sprite has a comment explaining its responsibilities and a list of incoming requests. The largest sprite has about 2,250 blocks. [The sprite guide](docs/sprite-architecture.md) explains the shared state, message boundaries, and build process.
+The native project is divided into **Game controller**, **Physics**, **Track editor**, **Menus**, **Track codes**, and **Renderer**, plus the existing **Prompt history** sprite. Each sprite has a comment explaining its responsibilities and a list of incoming requests. The build report records the block count for each sprite. [The sprite guide](docs/sprite-architecture.md) explains the shared state, message boundaries, and build process.
 
 Local Scratch account metadata, historical publishing-helper copies, Python bytecode and local credential/configuration files are excluded by the root `.gitignore`. Archived game builds and their generators remain included. The lr-core reference is included as ordinary source files, with no submodule setup required. Its original Git administration data is retained locally under an ignored `.git-local-metadata` directory.
 
@@ -83,22 +85,25 @@ The current verification covers dropdown selection and dismissal, disabled menu 
 
 Adapted from David Lu / conundrumer's [lr-core 0.8.2](https://github.com/conundrumer/lr-core), commit `ce48ebed967d24ff4582995b31342440901f913d`. The upstream package declares MIT licensing. Attribution and license text are embedded in the Scratch project and included in `LICENSE.lr-core.txt`.
 
-Mounted motion keeps the original 17-point lr-core model, Verlet integration, gravity of 0.175 and six constraint/contact passes. Four articulated elbow/knee nodes and a physical head bring the total to 22 points. They follow the original pose until detachment, preserving the original ride and natural unseating. After detachment, eight solver passes enforce mass-weighted limb bones, knee/elbow bend direction, neck limits and selected self-separation constraints. Circle-to-line contacts give the head and limbs thickness; small restitution, tangent friction and air damping let the body roll, slide and settle. Track segments remain lines. Retry restores the mounted state and clears contacts. Original Stick, RepelStick, breakable BindStick, orientation-based BindJoint, DirectedChain scarf constraints and direct SolidLine contacts are retained for the mounted solver. A 64-unit spatial grid supplies nearby line candidates in source order. Geometry edits invalidate it; playback rebuilds it once. Camera coordinates do not affect physics.
+The body and sled use the same Verlet integration and eight constraint/contact passes throughout the run, with gravity 0.175. The rigid sled retains six distance constraints. Torso, neck, elbows and knees use mass-weighted bones and anatomical limits. Passive muscle springs preserve the forward-reaching arms and the original leg proportions throughout the run. Support pressure and seat proximity load a compliant leg-balance spring that brings the feet forward after landing, with mass-weighted reaction on the hip and sled. Circle/capsule contacts exchange equal and opposite impulses with the finite seat, deck and rear post, including swept contact when a body part crosses a moving surface. Contact friction, elastic yielding grips and a balance spring loaded by actual support forces produce the rider's motion. The rope has its own physical loose end and a maximum length; it is drawn from those simulated points. When support is lost, those contact forces vanish naturally. The renderer reads physical particle positions directly, including the knees and elbows. No body pose or velocity is reset on departure or return. A 64-unit spatial grid supplies nearby terrain in source order; camera coordinates do not affect physics.
 
-This remains a subset port. It does not include upstream immutable timeline/rewind, file-format compatibility, procedural scarf flutter, endpoint extension flags. Grip/Ice/Scenery are editor material extensions. Extreme speeds can tunnel through the original ten-unit line contact bound. The track limit is 3,000 segments; this limit is a guard against unbounded editing, not a performance guarantee. Undo snapshots and the saved slot increase project size. Drawing, menus and gameplay work with a pointer or touch; the desktop mode also supplies keyboard controls.
+This remains a subset port. It does not include upstream immutable timeline/rewind, file-format compatibility, procedural scarf flutter, endpoint extension flags. Grip/Ice/Scenery are editor material extensions. Extreme speeds can still tunnel past thin terrain when they cross beyond the current spatial-query cell. The track limit is 3,000 segments; this limit is a guard against unbounded editing, not a performance guarantee. Undo snapshots and the saved slot increase project size. Drawing, menus and gameplay work with a pointer or touch; the desktop mode also supplies keyboard controls.
 
 The previous demo is retained at `artifacts/demo-v1.sb3`.
 
-Default-course check: `node tools/verify-course.mjs` verifies all-normal materials, natural loss of balance at frame 96, visible separation, crash stopping, Retry and Demo restoration. `tools/course.py` is the shared course data source.
+Default-course check: `python tools/verify-contact-physics.py` verifies the physical launch lip, lower catch runway and short reverse-boost strip. It checks seated limb posture, sustained clearance of the body colliders, physical return and completion. `tools/course.py` supplies both the default track and Demo, including the matching start and goal flags.
 
 Confirmation regression check: `node tools/verify-confirmation.mjs` exercises guarded Track/Edit actions, cancellation, keyboard confirmation, modal input blocking and paused/running simulation behavior.
 
 Connected toolbar check: `node tools/verify-connected.mjs` tests the shared mode selector, relocated Run/Pause, Retry and Step targets, and the mode-change confirmation. `dist/ui-controls.json` records their current centers for test automation.
 
-Smooth-course and connector check: `node tools/verify-smooth.mjs` verifies a continuous all-normal track with no blocking segments, the rendered parent/bus/three connector branches, natural rider separation and an intact sled.
-
-Ragdoll check: `node tools/verify-ragdoll.mjs` compares the mounted motion with the numerical source, checks natural detachment, bone stability, finite motion, settling, pause/resume/step and retry. `tools/ragdoll.py` defines the post-detachment body and contact solver. The default fall settles naturally rather than reaching the duration cap.
+The older `verify-course`, `verify-smooth`, `verify-ragdoll`, numerical-equivalence and pose-transition scripts describe archived course and physics versions. `tools/ragdoll.py` now defines only the initial articulated anatomy; `tools/contact_rider.py` emits the continuous solver.
 
 Scratch compatibility: mouse booleans use explicit comparisons. Scalar variables placed directly in boolean sockets can become dangling block references after Scratch GUI saves the project. `node tools/verify-scratch-online.mjs` checks the published project in the official Scratch runtime, including export/import, fullscreen and playback.
 
 Acceleration regression: `node tools/verify-acceleration.mjs` checks drawing, native LR1 round trips, forward/reverse boosts and 30-frame numerical agreement with the lr-core equations.
+
+
+
+
+Timeline verification: `node tools/verify-timeline.mjs` compares every cached demo frame in the delivered Scratch project with the numerical solver. It also checks mouse and touch scrubbing, edits to the start and goal, Undo, playback and crashes.
