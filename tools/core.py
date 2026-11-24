@@ -58,14 +58,20 @@ def color(c):return stmt('pen_setPenColorToColor',{'COLOR':c})
 def size(s):return stmt('pen_setPenSizeTo',{'SIZE':s})
 def key(k):return Expr('sensing_keypressed',{'KEY_OPTION':k})
 body=json.loads((ROOT/'reference/lr-core/src/line-rider-engine/rider-data/index.json').read_text())
-from ragdoll import extend_rider
+from mounted_rider import extend_rider
 body=extend_rider(body)
 pts=[p for p in body['states'] if p['type']!='Binding'];idx={p['id']:i+1 for i,p in enumerate(pts)}
 for k in ['X','Y','PX','PY','VX','VY','Friction','Air','Initial X','Initial Y']:lists[k]=[k,[]]
 for p in pts:
  for k,val in [('X',p['x']),('Y',p['y']),('PX',p['x']-.4),('PY',p['y']),('VX',.4),('VY',0),('Friction',p.get('friction',0)),('Air',p.get('airFriction',0)),('Initial X',p['x']),('Initial Y',p['y'])]:lists[k][1].append(val)
-# Only the six rigid sled distances survive from the original bindings.
-cons=[c for c in body['constraints'] if c['type']=='Stick' and idx[c['p1']]<=4 and idx[c['p2']]<=4]
+cons=[c for c in body['constraints'] if c['type'] in ['Stick','BindStick','RepelStick']]
+for k in ['CA','CB','Rest','Kind','Endurance']:lists[k]=[k,[]]
+for c in cons:
+ a,b=idx[c['p1']],idx[c['p2']]
+ rest=math.hypot(pts[a-1]['x']-pts[b-1]['x'],pts[a-1]['y']-pts[b-1]['y'])*c.get('lengthFactor',1)
+ kind={'Stick':0,'BindStick':1,'RepelStick':2}[c['type']]
+ for k,v in zip(['CA','CB','Rest','Kind','Endurance'],[a,b,rest,kind,c.get('endurance',0)*rest*.5]):
+  lists[k][1].append(v)
 from course import default_track
 tracks=default_track()
 for k in ['LX','LY','DX','DY','NX','NY','InvSq','Material','MinX','MaxX','MinY','MaxY']:lists[k]=[k,[]]

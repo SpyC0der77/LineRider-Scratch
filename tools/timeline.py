@@ -1,11 +1,7 @@
 """Precompute the ride in native Scratch and display it at an independent playhead."""
 
-CACHE_LISTS = ('X', 'Y', 'PX', 'PY', 'VX', 'VY', 'Ground contact', 'Sled contact', 'Grip force')
-CACHE_VARIABLES = (
-    'Ride result', 'Mounted', 'Sled intact', 'Flight frames', 'Flight departed',
-    'Flight failed', 'Ragdoll sleep frames', 'Ragdoll speed squared',
-    'Support load', 'Seat load', 'Seat gap', 'Seat along',
-)
+CACHE_LISTS = ('X', 'Y', 'PX', 'PY', 'VX', 'VY')
+CACHE_VARIABLES = ('Ride result', 'Mounted')
 CANVAS_BOTTOM = -130
 RAIL_LEFT = -226
 RAIL_RIGHT = 68
@@ -46,7 +42,7 @@ def define_result_check(api):
     previous_y = V('Previous hip Y')
     proc('check result', [
         iff(OR(
-            OR(cmp('equals', V('Flight failed'), 1), cmp('equals', V('Sled intact'), 0)),
+            cmp('equals', V('Mounted'), 0),
             OR(cmp('gt', hip_y, V('Lowest track') + 160), cmp('gt', mathop('abs', hip_x), 30000)),
         ), [setv('State', 3)], [
             iff(AND(
@@ -118,7 +114,7 @@ def install(api):
                 setv('Previous hip X', hip_x),
                 setv('Previous hip Y', hip_y),
                 iff(cmp('equals', physics_frame + 1, requested_detach), [
-                    setv('Physics Flight failed', 1),
+                    setv('Physics Mounted', 0),
                 ]),
                 call('physics frame'),
                 call('check result'),

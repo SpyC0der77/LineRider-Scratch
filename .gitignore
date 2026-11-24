@@ -6,6 +6,9 @@ shared-metadata*.json
 # copies locally; the archived game generators and Scratch projects stay public.
 /archive/**/source/generator/tools/upload_scratch.py
 
+# Local Scratch test build with capture controls.
+/dist/testing/
+
 # Local credentials/configuration and generated Python bytecode.
 .env
 .env.*

@@ -20,10 +20,7 @@ ROLES = {
         'clear timeline detach','detach rider',
     },
     'Physics': {
-        'reset rider','integrate points','physics frame','solve body bones','damp sled rotation',
-        'solve joint limits','sled coordinate frame','solve elastic grips',
-        'solve rider balance','body sled contact','solve sled contacts',
-        'terrain circle contact','solve scarf','observe rider contacts',
+        'reset rider','integrate points','physics frame','solve sticks','finish frame','update rider pose',
         'collide points with lines','build spatial grid','nearby lines',
         'check result','update timeline','record timeline frame',
     },

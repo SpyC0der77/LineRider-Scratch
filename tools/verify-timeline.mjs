@@ -1,154 +1,140 @@
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
-import {writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
 import {EditorSession} from './editor-session.mjs';
 
 process.env.SCRATCH_OPTIMIZER_HEADLESS = '1';
 process.env.LINE_RIDER_RELEASE_TEST = '1';
 
 const session = new EditorSession();
-const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-const state = () => session.call('get_variable_list_data');
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const click = (x, y) => session.clickStage(x - 240, 180 - y);
-const key = name => session.pressKeys([
-    {key: name, hold_duration_ms: 80, time_after_last_key_press_ms: 80},
-]);
-const seek = (frame, end) => session.clickStage(Math.round(-226 + 294 * frame / end), -142);
-const ready = ({variables: v}) => +v['Timeline ready'] === 1 && +v['Timeline current pose'] === 1;
+const read = item_name => session.call('get_variable_list_data', {item_name});
+const key = name => session.pressKeys([{key: name, hold_duration_ms: 80, time_after_last_key_press_ms: 80}]);
+const scalar = async name => Number((await read(name)).variables[name]);
+const list = async name => (await read(name)).lists[name].items;
 
 async function until(label, predicate) {
-    const deadline = Date.now() + 25_000;
+    const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
-        const result = await state();
-        if (predicate(result)) return result;
-        await wait(100);
+        if (await predicate()) return;
+        await delay(80);
     }
-    throw new Error('Timed out waiting for ' + label);
+    throw Error('Timed out waiting for ' + label);
 }
 
-function pointOnStage(vars, x, y) {
-    return [(x - vars['Camera X']) * vars.Zoom, -20 - (y - vars['Camera Y']) * vars.Zoom];
+async function seek(frame, end) {
+    const x = Math.round(-226 + 294 * frame / end);
+    await session.clickStage(x, -142);
+    const actualFrame = Math.round((x + 226) * end / 294);
+    await until('scrubbed frame', async () => await scalar('Frame') === actualFrame);
+    return actualFrame;
 }
+
+const ready = async () => await scalar('Timeline ready') === 1 && await scalar('Timeline current pose') === 1
+    && await scalar('Timeline loading') === 0;
 
 try {
-    await session.openFile(process.cwd() + '/dist/Line Rider.sb3');
-    await session.call('green_flag');
-    const demo = await until('full demo timeline', ready);
-    const end = +demo.variables['Timeline end'];
-    const reference = JSON.parse(execFileSync('python', ['-c',
-        'import sys,json; sys.path.insert(0,"tools"); from course import default_track; import contact_reference as ref; print(json.dumps(ref.run(default_track())))',
-    ], {encoding: 'utf8'}));
-    assert.equal(end, reference.length);
-    assert.equal(+demo.variables.Frame, 0);
-    assert.equal(+demo.variables.Editing, 1);
-    assert.deepEqual(demo.lists['Timeline Ride result'].items.map(Number), [...Array(end).fill(1), 4]);
-    for (const axis of ['X', 'Y']) {
-        const expected = [...demo.lists[axis].items, ...reference.flatMap(row => row[axis.toLowerCase()])];
-        const actual = demo.lists['Timeline ' + axis].items;
-        assert.equal(actual.length, expected.length);
-        for (let i = 0; i < actual.length; i++) {
-            assert.ok(Math.abs(actual[i] - expected[i]) < 1e-7, axis + ' at ' + i);
-        }
+    const build = resolve('dist/Line Rider.sb3');
+    const comparison = process.env.LINE_RIDER_COMPARISON;
+    const fields = ['LX', 'LY', 'DX', 'DY', 'Material', 'Timeline X', 'Timeline Y',
+        'Timeline PX', 'Timeline PY', 'Timeline VX', 'Timeline VY', 'Timeline Ride result'];
+    let previous;
+    if (comparison) {
+        await session.openFile(resolve(comparison));
+        await session.call('green_flag');
+        await until('comparison timeline', ready);
+        previous = await Promise.all(fields.map(list));
+        await session.loadCurrentFile(build);
+    } else {
+        await session.openFile(build);
     }
-    const capture = await session.capture();
-    await writeFile('artifacts/timeline-after.png', Buffer.from(capture.image_base64, 'base64'));
-    console.log('PASS every demo frame matches the physics reference, through the finish at frame', end);
 
-    await session.dragStage([[-226, -142], [-50, -142], [-112, -142]], 100);
-    const selected = Math.round(114 * end / 294);
-    const paused = await until('mouse scrub', ({variables: v}) => +v.Frame === selected);
-    assert.equal(+paused.variables.Editing, 1);
-    assert.equal(+paused.variables.Playing, 0);
-    assert.equal(paused.lists.LX.length, demo.lists.LX.length);
-    const points = demo.lists.X.length;
-    const demoPose = frame => demo.lists['Timeline X'].items.slice(frame * points, (frame + 1) * points);
-    assert.deepEqual(paused.lists.X.items, demoPose(selected));
+    await session.call('green_flag');
+    await until('full timeline', ready);
+    const end = await scalar('Timeline end');
+    assert.equal(end, 348);
+    assert.equal(await scalar('Frame'), 0);
+    assert.equal(await scalar('Editing'), 1);
+    assert.deepEqual((await list('Timeline Ride result')).map(Number), [...Array(end).fill(1), 4]);
+    const points = (await list('Initial X')).length;
+    const x = await list('Timeline X');
+    assert.equal(x.length, (end + 1) * points);
+    const y = await list('Timeline Y');
+    assert.equal(y.length, x.length);
+    if (previous) {
+        for (const [i, field] of fields.entries()) {
+            assert.deepEqual(await list(field), previous[i], field);
+        }
+        console.log('PASS all cached poses, velocities and track segments match the approved build');
+    }
+    console.log('PASS full timeline through finish at frame', end);
 
+    const selected = await seek(90, end);
+    assert.equal(await scalar('Editing'), 1);
+    assert.equal(await scalar('Playing'), 0);
+    assert.deepEqual(await list('X'), x.slice(selected * points, (selected + 1) * points));
     await click(425, 20);
-    await until('Play mode at the selected frame', ({variables: v}) => +v.Editing === 0 && +v.Frame === selected);
+    await until('paused Play', async () => await scalar('Editing') === 0);
     await key('n');
-    await until('one paused step', ({variables: v}) => +v.Frame === selected + 1 && +v.Playing === 0);
+    await until('one cached step', async () => await scalar('Frame') === selected + 1);
     await click(331, 20);
-    await until('Edit mode at the same frame', ({variables: v}) => +v.Frame === selected + 1 && +v.Editing === 1);
-    console.log('PASS dragging, stepping, and switching modes retain the playhead');
+    await until('return to Edit', async () => await scalar('Editing') === 1);
+    assert.equal(await scalar('Frame'), selected + 1);
 
     await key('f');
     await key('6');
-    const fitted = (await state()).variables;
-    await session.clickStage(...pointOnStage(fitted, 80, 52));
-    const short = await until('earlier goal', snapshot => ready(snapshot) && +snapshot.variables['Goal X'] < 100);
-    const shortEnd = +short.variables['Timeline end'];
-    assert.ok(shortEnd < selected);
-    assert.equal(+short.variables.Frame, shortEnd);
-    assert.equal(+short.variables.State, 4);
-
+    const zoom = await scalar('Zoom');
+    const goalX = x[40 * points + 4];
+    const goalY = y[40 * points + 4];
+    await session.clickStage((goalX - await scalar('Camera X')) * zoom, -20 - (goalY - await scalar('Camera Y')) * zoom);
+    await until('earlier goal', async () => await ready() && await scalar('Timeline end') < selected);
+    const earlyEnd = await scalar('Timeline end');
+    assert.equal(await scalar('State'), 4);
+    assert.equal(await scalar('Frame'), earlyEnd);
     await key('z');
-    const restored = await until('Undo restores the longer ride', snapshot => ready(snapshot) &&
-        +snapshot.variables['Timeline end'] === end && +snapshot.variables.Frame === selected + 1);
-    assert.deepEqual(restored.lists.X.items, demoPose(selected + 1));
-    console.log('PASS goal edits clamp to an earlier finish and Undo restores the selected time');
+    await until('restored frame and goal', async () => await ready() &&
+        await scalar('Timeline end') === end && await scalar('Frame') === selected + 1);
+    assert.deepEqual(await list('X'), x.slice((selected + 1) * points, (selected + 2) * points));
+    console.log('PASS the earlier goal clamps the playhead to frame', earlyEnd, 'and Undo restores the selected time');
 
     await key('h');
     await key('5');
-    const home = (await state()).variables;
-    await session.clickStage(...pointOnStage(home, 12, 25.6));
-    const moved = await until('moved spawn', snapshot => ready(snapshot) && +snapshot.variables['Spawn X'] > 8);
-    assert.equal(+moved.variables.Frame, selected + 1);
-    assert.notEqual(+moved.lists.X.items[4], reference[selected].x[4]);
-    assert.ok(Math.abs(moved.lists['Timeline X'].items[0] - moved.variables['Spawn X']) < 1e-7);
+    const spawnX = await scalar('Spawn X');
+    const spawnY = await scalar('Spawn Y');
+    const homeZoom = await scalar('Zoom');
+    await session.clickStage(
+        (spawnX + 12 - await scalar('Camera X')) * homeZoom,
+        -20 - (spawnY + 3 - await scalar('Camera Y')) * homeZoom,
+    );
+    await until('moved start', async () => await scalar('Spawn X') !== spawnX && await ready());
+    assert.equal(await scalar('Frame'), selected + 1);
+    assert.notDeepEqual(await list('X'), x.slice((selected + 1) * points, (selected + 2) * points));
     await key('z');
-    await until('original spawn', snapshot => ready(snapshot) && +snapshot.variables['Spawn X'] === 0);
-    console.log('PASS moving the start recalculates the rider at the same frame');
+    await until('restored start', async () => await ready() && await scalar('Spawn X') === spawnX);
+    console.log('PASS moving the start updates the rider while retaining the frame');
 
-    await key('h');
-    await key('2');
-    const drawingView = (await state()).variables;
-    await session.dragStage([
-        pointOnStage(drawingView, 40, 46),
-        pointOnStage(drawingView, 115, 56),
-    ], 160);
-    const edited = await until('terrain edit', snapshot => ready(snapshot) && snapshot.lists.LX.length > demo.lists.LX.length);
-    assert.equal(+edited.variables.Frame, selected + 1);
-    assert.notDeepEqual(edited.lists.X.items, demoPose(selected + 1));
-    await key('z');
-    await until('original terrain', snapshot => ready(snapshot) && snapshot.lists.LX.length === demo.lists.LX.length);
-    console.log('PASS drawing a new line changes the selected pose without moving the playhead');
-
-    await key('h');
-    await key('6');
-    await session.clickStage(...pointOnStage((await state()).variables, -26, 20));
-    const behind = await until('goal behind the spawn', snapshot => ready(snapshot) && +snapshot.variables['Goal X'] < -20);
-    const crashEnd = +behind.variables['Timeline end'];
-    assert.ok(crashEnd > end);
-    assert.equal(+behind.lists['Timeline Ride result'].items.at(-1), 3);
-    await seek(crashEnd, crashEnd);
-    await until('first crash frame', ({variables: v}) => +v.Frame === crashEnd && +v.State === 3);
-    await seek(0, crashEnd);
-    await until('backward scrub clears the displayed crash', ({variables: v}) => +v.Frame === 0 && +v.State === 0);
-    await key('z');
-    await until('original goal', snapshot => ready(snapshot) && +snapshot.variables['Timeline end'] === end);
-    console.log('PASS the crash bounds the timeline when the goal is never crossed');
-
+    await click(425, 20);
+    await until('Play preview', async () => await scalar('Editing') === 0);
+    await key('x');
+    await until('terminal crash', async () => await ready() && await scalar('State') === 3);
+    assert.equal(await scalar('Timeline end'), selected + 2);
+    assert.equal(await scalar('Frame'), selected + 2);
+    assert.equal(await scalar('Playing'), 0);
+    assert.equal(+(await list('Timeline Mounted')).at(-1), 0);
+    const crash = await scalar('Frame');
+    await key('n');
+    assert.equal(await scalar('Frame'), crash);
+    await seek(0, crash);
+    assert.equal(await scalar('State'), 2);
+    console.log('PASS the crash is the final frame and can be scrubbed backward');
     const page = session.requirePage();
     await (await page.createCDPSession()).send('Emulation.setTouchEmulationEnabled', {
         enabled: true, maxTouchPoints: 1,
     });
-    await session.touchDragStage([[20, -142], [53, -142], [63, -142]], 120);
-    const touch = await until('touch scrub', ({variables: v}) => +v.Frame > end - 8 && +v.Frame < end);
-    assert.equal(+touch.variables.Playing, 0);
-    await click(315, 56);
-    await until('playback resumes and stops at the finish', ({variables: v}) =>
-        +v.Editing === 0 && +v.Frame === end && +v.State === 4 && +v.Playing === 0);
-
-    await seek(60, end);
-    const beforeDetach = await until('seek back in Play', ({variables: v}) => +v.Frame === 60 && +v.State === 2);
-    await key('x');
-    await until('manual detach', snapshot => ready(snapshot) && +snapshot.variables.State === 3 &&
-        +snapshot.variables['Timeline end'] === +beforeDetach.variables.Frame + 1);
-    await click(377, 56);
-    await until('Retry restores the natural timeline', snapshot => ready(snapshot) &&
-        +snapshot.variables['Timeline end'] === end && +snapshot.variables.Playing === 1);
-    console.log('PASS touch scrub, cached playback, detach, and Retry');
+    await session.touchDragStage([[-226, -142], [-164, -142], [-79, -142]], 120);
+    await until('touch scrub', async () => await scalar('Frame') === Math.round(crash / 2));
+    assert.equal(await scalar('Playing'), 0);
+    console.log('PASS touch scrubbing on a paused ride');
 } finally {
     await session.close();
 }

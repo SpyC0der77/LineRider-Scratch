@@ -1,6 +1,6 @@
 """Build a native Scratch editor around the lr-core point solver."""
 from core import *
-import core, html
+import argparse, core, html
 from course import DEFAULT_GOAL, DEFAULT_SPAWN
 from timeline import (
  CANVAS_BOTTOM, build_assets as build_timeline_assets, hit as timeline_hit,
@@ -44,8 +44,8 @@ for k,v in [('Spawn X',DEFAULT_SPAWN[0]),('Spawn Y',DEFAULT_SPAWN[1]),('Goal X',
 # A 64-unit uniform grid. Each line is indexed in every padded AABB cell.
 proc('build spatial grid',[clear(k) for k in ['Grid keys','Grid heads','Grid line','Grid next']]+[setv('gj',1),setv('Lowest track',V('Spawn Y')+80),loop(length('LX'),[iff(cmp('gt',L('MaxY',V('gj')),V('Lowest track')),[setv('Lowest track',L('MaxY',V('gj')))]),setv('gx0',mathop('floor',L('MinX',V('gj'))/64)),setv('gx1',mathop('floor',L('MaxX',V('gj'))/64)),setv('gy0',mathop('floor',L('MinY',V('gj'))/64)),setv('gy1',mathop('floor',L('MaxY',V('gj'))/64)),setv('gx',V('gx0')),loop(V('gx1')-V('gx0')+1,[setv('gy',V('gy0')),loop(V('gy1')-V('gy0')+1,[setv('grid key',cat(V('gx'),':',V('gy'))),setv('bucket',itemindex('Grid keys',V('grid key'))),iff(cmp('equals',V('bucket'),0),[add('Grid keys',V('grid key')),add('Grid heads',0),setv('bucket',length('Grid keys'))]),add('Grid line',V('gj')),add('Grid next',L('Grid heads',V('bucket'))),replace('Grid heads',V('bucket'),length('Grid line')),change('gy',1)]),change('gx',1)]),change('gj',1)]),setv('Grid ready',1)])
 proc('nearby lines',[clear('Candidates'),setv('grid key',cat(mathop('floor',L('Physics X',V('i'))/64),':',mathop('floor',L('Physics Y',V('i'))/64))),setv('bucket',itemindex('Grid keys',V('grid key'))),setv('node',0),iff(cmp('gt',V('bucket'),0),[setv('node',L('Grid heads',V('bucket')))]),until(cmp('equals',V('node'),0),[setv('line id',L('Grid line',V('node'))),setv('sort at',1),until(OR(cmp('gt',V('sort at'),length('Candidates')),cmp('gt',L('Candidates',V('sort at')),V('line id'))),[change('sort at',1)]),insert('Candidates',V('sort at'),V('line id')),setv('node',L('Grid next',V('node')))])])
-from contact_rider import install as install_contact_rider
-install_contact_rider(simulation_api(globals()))
+from mounted_rider import install as install_mounted_rider
+install_mounted_rider(simulation_api(globals()))
 install_timeline(globals())
 # Whole-stroke undo/redo, bounded to twelve snapshots per stack.
 def clearstack(prefix):return [clear(prefix+' '+f) for f in FIELDS+['Count']+META]
@@ -288,28 +288,28 @@ project={'targets':[stage,engine,history],'monitors':[{'id':'Track code','mode':
 # Open on the same course restored by the Demo course action.
 from clean_project import clean
 release,report=clean(project)
-test_project,test_report=clean(project,test_hooks=True)
 from split_sprites import split as split_sprites
 release,module_report=split_sprites(release,costume,svg)
-test_project,_=split_sprites(test_project,costume,svg)
 report['blocks_after']=sum(len(t['blocks']) for t in release['targets'])
 report['modules']=module_report
-(ROOT/'dist/testing').mkdir(parents=True,exist_ok=True)
 # Test hooks are separate; the delivered .sb3 contains no capture/step test state.
 def write_project(path,data):
  used={c['md5ext'] for t in data['targets'] for c in t['costumes']}
  with zipfile.ZipFile(path,'w',zipfile.ZIP_DEFLATED) as z:
   z.writestr('project.json',json.dumps(data))
   for name in sorted(used):z.writestr(name,assets[name])
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--testing',action='store_true',help='also build a local project with test controls')
+args=parser.parse_args()
 write_project(ROOT/'dist/Line Rider.sb3',release)
-write_project(ROOT/'dist/testing/Line Rider.sb3',test_project)
+if args.testing:
+ test_project,_=clean(project,test_hooks=True)
+ test_project,_=split_sprites(test_project,costume,svg)
+ (ROOT/'dist/testing').mkdir(parents=True,exist_ok=True)
+ write_project(ROOT/'dist/testing/Line Rider.sb3',test_project)
 (ROOT/'dist/project.json').write_text(json.dumps(release,indent=2),encoding='utf-8')
 (ROOT/'dist/build-report.json').write_text(json.dumps(report,indent=2))
 print(f"Built editor: {report['blocks_after']} blocks, {len(costumes)} costumes, {len(stage['lists']['LX'][1])} current track segments.")
 print(json.dumps(report))
 
 (ROOT/'dist/ui-controls.json').write_text(json.dumps({c['name']:{'x':c['x']+c['w']/2,'y':c['y']+c['h']/2} for c in controls},indent=2),encoding='utf-8')
-
-from archive_versions import snapshot, index as archive_index
-snapshot(ROOT/'dist/Line Rider.sb3','multiple-sprites',generator=True)
-archive_index()

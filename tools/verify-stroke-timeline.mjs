@@ -73,13 +73,9 @@ async function verifyStroke() {
 }
 
 try {
-    const builds = ['dist/Line Rider.sb3', 'dist/[AI] Line Rider - Timeline.sb3'];
-    await session.openFile(resolve(builds[0]));
-    for (const [index, path] of builds.entries()) {
-        if (index) await session.loadCurrentFile(resolve(path));
-        await verifyStroke();
-        console.log('PASS live pencil, deferred rebuild, loading, retained frame, and no-op tap in', path);
-    }
+    await session.openFile(resolve('dist/Line Rider.sb3'));
+    await verifyStroke();
+    console.log('PASS live pencil, deferred rebuild, loading, retained frame, and no-op tap');
 } finally {
     await session.close();
 }

@@ -60,8 +60,10 @@ try{
  const mixedMeta={goal:0,flags:[-45.123,9.887,1234.56,-999.99]};
  v=await loadCode(' \n'+encode(mixed,mixedMeta).toLowerCase().match(/.{1,30}/g).join('-\n')+'\t');assert.equal(+v.variables['Code open'],0,v.variables['Code error']);expectTrack(v,mixed,mixedMeta);console.log('PASS disconnected/vertical segments, all four materials, negative flags, disabled goal, whitespace and lowercase');
  v=await saveCode();assert.equal(v.variables['Code text'],encode(mixed,mixedMeta));await close();console.log('PASS stable encode-decode-encode');
- // Save is available during Play and freezes/resumes the same ride.
- await click(315.3333333333333,56);await until(v=>+v.variables.Playing===1,'run');v=await saveCode();const frame=+v.variables.Frame;await wait(250);assert.equal(+(await state()).variables.Frame,frame);assert.equal(+v.variables.Editing,0);await close();await until(v=>+v.variables.Frame>frame,'resume');
+ // Use the demo for the modal test so a short crash cannot end the ride first.
+ v=await loadCode(code);expectTrack(v,originalTrack,originalMeta);
+ await until(v=>+v.variables['Timeline ready']===1&&+v.variables['Timeline loading']===0,'demo timeline');
+ await click(315.3333333333333,56);await until(v=>+v.variables.Playing===1&&+v.variables.Frame>0,'run');v=await saveCode();const frame=+v.variables.Frame;await wait(250);assert.equal(+(await state()).variables.Frame,frame);assert.equal(+v.variables.Editing,0);await close();await until(v=>+v.variables.Frame>frame,'resume');
  await menu();await click(95,228);await until(v=>+v.variables['Confirm open']===1,'load from Play confirmation');await click(264,219);await until(v=>+v.variables['Confirm open']===0,'cancel mode change');assert.equal(+(await state()).variables.Editing,0);
  await menu();await click(95,228);await until(v=>+v.variables['Confirm open']===1,'confirm again');await click(378,219);await until(v=>+v.variables['Code open']===2&&+v.variables.Editing===1,'accept mode change');await wait(100);await answer(code);v=await until(v=>+v.variables['Code open']===0,'load after confirm');expectTrack(v,originalTrack,originalMeta);console.log('PASS Play export pauses/resumes; loading uses existing mode-change confirmation');
  // The documented capacity is exercised in stock Scratch's VM, including string limits.

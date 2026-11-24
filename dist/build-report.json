@@ -1,7 +1,7 @@
 {
-  "blocks_before": 23402,
-  "blocks_after": 16326,
-  "compressed_variable_reporters": 7219,
+  "blocks_before": 22211,
+  "blocks_after": 15315,
+  "compressed_variable_reporters": 7079,
   "unused_procedures": [
     "new or edit",
     "request demo track",
@@ -9,19 +9,19 @@
     "request new track",
     "request toggle finish goal"
   ],
-  "removed_variables": 19,
-  "removed_lists": 1,
+  "removed_variables": 9,
+  "removed_lists": 0,
   "orphaned_blocks": 0,
   "test_hooks": false,
   "modules": {
     "sprites": {
       "Stage": 295,
-      "Game controller": 653,
-      "Physics": 3074,
+      "Game controller": 647,
+      "Physics": 1037,
       "Track editor": 1230,
       "Menus": 1939,
       "Track codes": 601,
-      "Renderer": 8532,
+      "Renderer": 9564,
       "Prompt history": 2
     },
     "cross_sprite_call_sites": 54,

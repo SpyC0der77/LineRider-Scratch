@@ -1,8 +1,0 @@
-﻿It's just line rider in Scratch. That's it. Want to import a real line  rider track? https://scratch-line-rider-converter.spycoder77.chatgpt.site/
-
-This is lowkey unfinished but it is good enough and I have a lot of traffic going to my profile right now (because @Ricky-Jan and @s_federici loved and faved one of my projects) so I am trying to get this out as fast as possible.
-Edit: It's lowkey finished now
-
-The only thing I haven't implemented is save and load codes and various improvements to mobile
-
-By "I" I mean AI. GPT 6.1 Sol on High did literally everything.
