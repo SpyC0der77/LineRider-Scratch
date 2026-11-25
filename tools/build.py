@@ -5,7 +5,7 @@ from course import DEFAULT_GOAL, DEFAULT_SPAWN
 from timeline import (
  CANVAS_BOTTOM, build_assets as build_timeline_assets, hit as timeline_hit,
  install as install_timeline, render as render_timeline, simulation_api,
- mark_all, mark_line, track_frame_cells,
+ mark_all, mark_line, mark_restore, track_frame_cells,
 )
 # History and persistence are ordinary Scratch lists, saved with the project.
 FIELDS=['LX','LY','DX','DY','NX','NY','InvSq','Material','MinX','MaxX','MinY','MaxY']
@@ -53,7 +53,8 @@ install_timeline(globals())
 def clearstack(prefix):return [clear(prefix+' '+f) for f in FIELDS+['Count']+META]
 for prefix in ['Undo','Redo']:
  proc('push '+prefix,[iff(cmp('gt',length(prefix+' Count'),11),[setv('trim',L(prefix+' Count',1)),loop(V('trim'),[delete(prefix+' '+f,1) for f in FIELDS])]+[delete(prefix+' '+f,1) for f in ['Count']+META]),add(prefix+' Count',length('LX'))]+[add(prefix+' '+f,V(f)) for f in META]+[setv('h',1),loop(length('LX'),[add(prefix+' '+f,L(f,V('h'))) for f in FIELDS]+[change('h',1)])])
- proc('restore '+prefix,[setv('restore count',L(prefix+' Count',length(prefix+' Count'))),setv('restore at',length(prefix+' LX')-V('restore count')+1)]+[setv(f,L(prefix+' '+f,length(prefix+' '+f))) for f in META]+[clear(f) for f in FIELDS]+[loop(V('restore count'),[add(f,L(prefix+' '+f,V('restore at'))) for f in FIELDS]+[change('restore at',1)]),loop(V('restore count'),[delete(prefix+' '+f) for f in FIELDS])]+[delete(prefix+' '+f) for f in ['Count']+META]+mark_all(globals())+[setv('Grid ready',0),setv('Dirty',1)])
+ proc('mark restore '+prefix,mark_restore(globals(),prefix,FIELDS))
+ proc('restore '+prefix,[call('mark restore '+prefix),setv('restore count',L(prefix+' Count',length(prefix+' Count'))),setv('restore at',length(prefix+' LX')-V('restore count')+1)]+[setv(f,L(prefix+' '+f,length(prefix+' '+f))) for f in META]+[clear(f) for f in FIELDS]+[loop(V('restore count'),[add(f,L(prefix+' '+f,V('restore at'))) for f in FIELDS]+[change('restore at',1)]),loop(V('restore count'),[delete(prefix+' '+f) for f in FIELDS])]+[delete(prefix+' '+f) for f in ['Count']+META]+[setv('Grid ready',0),setv('Dirty',1)])
 proc('begin change',[call('push Undo')]+clearstack('Redo')+[setv('Dirty',1)])
 proc('undo',[iff(AND(cmp('equals',V('Editing'),1),cmp('gt',length('Undo Count'),0)),[call('push Redo'),call('restore Undo'),setv('Notice',0)])])
 proc('redo',[iff(AND(cmp('equals',V('Editing'),1),cmp('gt',length('Redo Count'),0)),[call('push Undo'),call('restore Redo'),setv('Notice',0)])])

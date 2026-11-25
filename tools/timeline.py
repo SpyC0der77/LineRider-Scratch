@@ -68,19 +68,73 @@ def define_result_check(api):
     ])
 
 
-def mark_line(api, index, delta):
-    """Record a line added or about to be removed so the cache before it survives."""
-    V, L, setv, iff, cmp, change = (api[name] for name in ('V', 'L', 'setv', 'iff', 'cmp', 'change'))
+def mark_box(api, read):
+    """Union one line's padded AABB into the dirty box. read(field) gives its value."""
+    V, setv, iff, cmp = (api[name] for name in ('V', 'setv', 'iff', 'cmp'))
     grow = []
     for bound, field in DIRTY_BOUNDS:
         test = 'lt' if bound.endswith('0') else 'gt'
-        grow.append(iff(cmp(test, L(field, index), V('Timeline dirty ' + bound)),
-                        [setv('Timeline dirty ' + bound, L(field, index))]))
+        grow.append(iff(cmp(test, read(field), V('Timeline dirty ' + bound)),
+                        [setv('Timeline dirty ' + bound, read(field))]))
     return [
         iff(cmp('equals', V('Timeline dirty'), 0),
-            [setv('Timeline dirty ' + bound, L(field, index)) for bound, field in DIRTY_BOUNDS] + [setv('Timeline dirty', 1)],
+            [setv('Timeline dirty ' + bound, read(field)) for bound, field in DIRTY_BOUNDS] + [setv('Timeline dirty', 1)],
             grow),
-        change('Timeline expected lines', delta),
+    ]
+
+
+def mark_line(api, index, delta):
+    """Record a line added or about to be removed so the cache before it survives."""
+    V, change = api['V'], api['change']
+    L = api['L']
+    return mark_box(api, lambda field: L(field, index)) + [change('Timeline expected lines', delta)]
+
+
+def mark_restore(api, prefix, fields, cap=400):
+    """Before a snapshot replaces the track, dirty only the lines that differ.
+
+    Survivors are the common prefix and suffix, which keep their relative order.
+    Snapshot line i (1-based) lives at list index 'snap base' + i in '<prefix> <field>'.
+    """
+    V, L, setv, iff, cmp, change, loop, until = (
+        api[name] for name in ('V', 'L', 'setv', 'iff', 'cmp', 'change', 'loop', 'until'))
+    AND, OR, NOT, length = api['AND'], api['OR'], api['NOT'], api['length']
+    count_name = prefix + ' Count'
+
+    def same(cur, snap):
+        out = None
+        for field in fields:
+            term = cmp('equals', L(field, cur), L(prefix + ' ' + field, snap))
+            out = term if out is None else AND(out, term)
+        return out
+
+    cur = V('snap cur')
+    new = V('snap count')
+    base = V('snap base')
+    prefix_n = V('snap prefix')
+    suffix_n = V('snap suffix')
+    index = V('snap i')
+    return [
+        setv('snap count', L(count_name, length(count_name))),
+        setv('snap base', length(prefix + ' LX') - new),
+        setv('snap cur', length('LX')),
+        setv('snap min', cur),
+        iff(cmp('gt', cur, new), [setv('snap min', new)]),
+        setv('snap prefix', 0),
+        until(OR(cmp('equals', prefix_n, V('snap min')),
+                 NOT(same(prefix_n + 1, base + prefix_n + 1))), [change('snap prefix', 1)]),
+        setv('snap suffix', 0),
+        until(OR(cmp('equals', suffix_n, V('snap min') - prefix_n),
+                 NOT(same(cur - suffix_n, base + new - suffix_n))), [change('snap suffix', 1)]),
+        setv('snap cur mid', cur - prefix_n - suffix_n),
+        setv('snap new mid', new - prefix_n - suffix_n),
+        iff(cmp('gt', V('snap cur mid') + V('snap new mid'), cap), mark_all(api), [
+            setv('snap i', prefix_n + 1),
+            loop(V('snap cur mid'), mark_box(api, lambda field: L(field, index)) + [change('snap i', 1)]),
+            setv('snap i', base + prefix_n + 1),
+            loop(V('snap new mid'), mark_box(api, lambda field: L(prefix + ' ' + field, index)) + [change('snap i', 1)]),
+        ]),
+        change('Timeline expected lines', new - length('LX')),
     ]
 
 
