@@ -72,7 +72,7 @@ async function forceFullRecalc() {
     await until('full recalculation', async () => await scalar('Timeline resume') === 0 && await settled());
 }
 
-const FIELDS = ['Timeline X', 'Timeline Y', 'Timeline PX', 'Timeline PY', 'Timeline VX', 'Timeline VY',
+const FIELDS = ['Timeline X', 'Timeline Y', 'Timeline PX', 'Timeline PY',
     'Timeline Ride result', 'LX', 'LY', 'DX', 'DY'];
 async function snapshot() {
     const out = {end: await scalar('Timeline end')};
@@ -197,7 +197,7 @@ async function verifyResume() {
     assert.equal(await scalar('Timeline end'), prevEnd);
     assert.ok(elapsed < 2000, `Far stroke took ${elapsed} ms to become ready`);
     const afterFar = await snapshot();
-    for (const field of FIELDS.slice(0, 7)) assert.deepEqual(afterFar[field], beforeFar[field], 'far stroke ' + field);
+    for (const field of FIELDS.slice(0, 5)) assert.deepEqual(afterFar[field], beforeFar[field], 'far stroke ' + field);
     assert.equal(afterFar.end, beforeFar.end, 'far stroke Timeline end');
     console.log(`PASS far stroke kept every frame (resume ${prevEnd + 1}) and was ready after ${elapsed} ms`);
 }

@@ -27,7 +27,7 @@ ROLES = {
     'Track editor': {
         'begin change','push Undo','push Redo','restore Undo','restore Redo','undo','redo',
         'save track','load track','new track','demo track','fit track','mouse world',
-        'snap endpoint','append segment','append stroke','erase under pointer',
+        'snap endpoint','append segment','append stroke','erase under pointer','erase cell walk',
         'begin erase gesture','erase endpoints touch','remove erase source',
         'bridge erased neighbor','delete eraser hit','pointer down normal','pointer drag',
         'pointer up','toggle finish goal','zoom in','zoom out','toggle grid',

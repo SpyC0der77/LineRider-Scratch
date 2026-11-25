@@ -105,7 +105,27 @@ proc('snap endpoint',[setv('snap distance',7/V('Zoom')),setv('h',1),loop(length(
 # All geometry mutations update twelve aligned lists in one warp transaction.
 proc('append segment',[setv('dx',V('Draw X')-V('Last X')),setv('dy',V('Draw Y')-V('Last Y')),setv('distance',mathop('sqrt',V('dx')*V('dx')+V('dy')*V('dy'))),iff(AND(cmp('gt',V('distance'),.05),cmp('lt',length('LX'),3000)),[setv('ax',V('Last X')),setv('ay',V('Last Y')),iff(cmp('lt',V('dx'),0),[setv('ax',V('Draw X')),setv('ay',V('Draw Y')),setv('dx',0-V('dx')),setv('dy',0-V('dy'))])]+[add(k,v) for k,v in [('LX',V('ax')),('LY',V('ay')),('DX',V('dx')),('DY',V('dy')),('NX',(0-V('dy'))/V('distance')),('NY',V('dx')/V('distance')),('InvSq',1/(V('distance')*V('distance'))),('Material',V('Brush')),('MinX',V('ax')-10),('MaxX',V('ax')+V('dx')+10),('MinY',V('ay')+V('dy')*.5-mathop('abs',V('dy'))*.5-10),('MaxY',V('ay')+V('dy')*.5+mathop('abs',V('dy'))*.5+10)]]+mark_line(globals(),length('LX'),1)+[setv('Grid ready',0)]),setv('Last X',V('Draw X')),setv('Last Y',V('Draw Y'))])
 proc('append stroke',[setv('target x',V('World X')),setv('target y',V('World Y')),setv('stroke dx',V('target x')-V('Last X')),setv('stroke dy',V('target y')-V('Last Y')),setv('stroke length',mathop('sqrt',V('stroke dx')*V('stroke dx')+V('stroke dy')*V('stroke dy'))),iff(cmp('gt',V('stroke length'),.1),[setv('parts',mathop('ceiling',V('stroke length')/8)),setv('step dx',V('stroke dx')/V('parts')),setv('step dy',V('stroke dy')/V('parts')),loop(V('parts'),[setv('Draw X',V('Last X')+V('step dx')),setv('Draw Y',V('Last Y')+V('step dy')),call('append segment')])])])
-proc('erase under pointer',[setv('best distance',9/V('Zoom')),setv('erase id',0),setv('h',1),loop(length('LX'),[setv('along',((V('World X')-L('LX',V('h')))*L('DX',V('h'))+(V('World Y')-L('LY',V('h')))*L('DY',V('h')))*L('InvSq',V('h'))),iff(cmp('lt',V('along'),0),[setv('along',0)]),iff(cmp('gt',V('along'),1),[setv('along',1)]),setv('erase dx',V('World X')-L('LX',V('h'))-L('DX',V('h'))*V('along')),setv('erase dy',V('World Y')-L('LY',V('h'))-L('DY',V('h'))*V('along')),setv('erase distance',mathop('sqrt',V('erase dx')*V('erase dx')+V('erase dy')*V('erase dy'))),iff(cmp('lt',V('erase distance'),V('best distance')),[setv('best distance',V('erase distance')),setv('erase id',V('h'))]),change('h',1)]),iff(cmp('gt',V('erase id'),0),[call('delete eraser hit')])])
+# Erase distance test for line index 'name'. The best line keeps the lowest index among equal distances, matching an ascending scan.
+def erase_test(name):
+ i=V(name)
+ return [setv('along',((V('World X')-L('LX',i))*L('DX',i)+(V('World Y')-L('LY',i))*L('DY',i))*L('InvSq',i)),iff(cmp('lt',V('along'),0),[setv('along',0)]),iff(cmp('gt',V('along'),1),[setv('along',1)]),setv('erase dx',V('World X')-L('LX',i)-L('DX',i)*V('along')),setv('erase dy',V('World Y')-L('LY',i)-L('DY',i)*V('along')),setv('erase distance',mathop('sqrt',V('erase dx')*V('erase dx')+V('erase dy')*V('erase dy'))),
+  iff(OR(cmp('lt',V('erase distance'),V('best distance')),AND(cmp('equals',V('erase distance'),V('best distance')),AND(cmp('gt',V('erase id'),0),cmp('lt',i,V('erase id'))))),[setv('best distance',V('erase distance')),setv('erase id',i)])]
+# Cell walk: every line whose padded AABB reaches the cell is in its chain.
+proc('erase cell walk',[setv('erase slot',op('mod',V('erase cx')*7919+V('erase cy'),V('Grid size'))+1),setv('erase key',V('erase cx')*100000+V('erase cy')),setv('erase node',L('Grid heads',V('erase slot'))),until(cmp('equals',V('erase node'),0),[iff(cmp('equals',L('Grid cell',V('erase node')),V('erase key')),[setv('erase h',L('Grid line',V('erase node')))]+erase_test('erase h')),setv('erase node',L('Grid next',V('erase node')))])])
+# With the grid valid and 9/Zoom <= 74, a line within the radius lies in one of the 3x3 cells around the pointer (its padded AABB is within 10 of the segment; the radius minus 10 is at most 64).
+# A dirty grid is rebuilt here, and Timeline restart keeps the ride recalculation.
+walk_cells=[]
+for dx in (-1,0,1):
+ for dy in (-1,0,1):
+  walk_cells+=[setv('erase cx',V('erase gx')+dx),setv('erase cy',V('erase gy')+dy),call('erase cell walk')]
+proc('erase under pointer',[setv('best distance',9/V('Zoom')),setv('erase id',0),
+ iff(NOT(cmp('gt',9/V('Zoom'),74)),[
+  iff(cmp('equals',V('Grid ready'),0),[call('build spatial grid'),setv('Timeline restart',1)]),
+  setv('erase gx',mathop('floor',V('World X')/64)),setv('erase gy',mathop('floor',V('World Y')/64)),
+ ]+walk_cells,[
+  setv('h',1),loop(length('LX'),erase_test('h')+[change('h',1)]),
+ ]),
+ iff(cmp('gt',V('erase id'),0),[call('delete eraser hit')])])
 # Input is coordinated in one loop. No UI hat can race a render's work variables.
 from track_code import install as install_track_code, render_code, assets_code
 install_track_code(globals())
@@ -161,7 +181,7 @@ chrome_render += render_controls(globals())
 chrome_render += render_timeline(globals())
 # Status text is real runtime data, not a static label.
 chrome_render += [setv('status','Edit'),iff(cmp('equals',V('State'),1),[setv('status','Riding')]),iff(cmp('equals',V('State'),2),[setv('status','Paused')]),iff(cmp('equals',V('State'),3),[setv('status','Crashed')]),iff(cmp('equals',V('State'),4),[setv('status','Finished')]),iff(cmp('equals',V('State'),5),[setv('status','Preview limit')])]+text(cat(V('status'),'   ',length('LX'),' lines   ',mathop('round',V('Zoom')*100),'%'),-228,-166)
-chrome_render += [iff(OR(cmp('equals',V('Editing'),0),cmp('gt',V('Frame'),0)),text(cat(mathop('round',V('Frame')/30*100)/100,'s   ',mathop('round',mathop('sqrt',L('VX',5)*L('VX',5)+L('VY',5)*L('VY',5))*30),'u/s'),85,-166),[iff(cmp('equals',V('Mobile'),0),text('G grid   H home   Space test',70,-166))])]
+chrome_render += [iff(OR(cmp('equals',V('Editing'),0),cmp('gt',V('Frame'),0)),text(cat(mathop('round',V('Frame')/30*100)/100,'s   ',mathop('round',V('Timeline speed')*30),'u/s'),85,-166),[iff(cmp('equals',V('Mobile'),0),text('G grid   H home   Space test',70,-166))])]
 chrome_render += [iff(AND(cmp('gt',V('Notice'),0),cmp('lt',Expr('sensing_timer'),V('Notice until'))),stamp(cat('notice ',V('Notice')),0,-114))]
 chrome_render += [iff(cmp('equals',V('Editing'),0),[
  iff(cmp('equals',V('State'),3),stamp(cat('crashed ',V('Mobile')),0,-95)),
