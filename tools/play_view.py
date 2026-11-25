@@ -34,7 +34,9 @@ def build_assets(api):
         if inset:
             costumes.append(costume(name,svg(32,32,content),16,16))
         else:
-            costumes.append(costume('control full-play Fullscreen normal',svg(32,32,content),16,16))
+            # The Play timeline bar is 24 px high, so this icon is scaled to fit it.
+            small='<rect x=".5" y=".5" width="23" height="23" rx="3" fill="#faf8f5" stroke="#b6b1a9"/>'+f'<path d="{path}" fill="none" stroke="#30332f" stroke-width="2" transform="scale(.75)"/>'
+            costumes.append(costume('control full-play Fullscreen normal',svg(24,24,small),12,12))
     costumes.append(costume('full play resume',svg(72,64,'<rect x=".5" y=".5" width="71" height="63" rx="4" fill="#faf8f5" stroke="#b6b1a9"/><path d="M28 18l23 14-23 14z" fill="#30332f"/>'),36,32))
     content='<rect x=".5" y=".5" width="191" height="69" rx="4" fill="#faf8f5" stroke="#b6b1a9"/>'
     for x,label in [(8,'Retry'),(102,'Edit')]:

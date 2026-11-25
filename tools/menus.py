@@ -16,9 +16,10 @@ def define_controls(api):
  def row(label,shortcut='',action=None,disabled=None,checked=None,alt=None,edit_action=None):return dict(edit_action=edit_action,label=label,shortcut=shortcut,action=action or [],can_disable=disabled is not None,checkable=checked is not None,disabled=disabled or cmp('equals',0,1),checked=checked or cmp('equals',0,1),alt=alt)
  menus=[
   dict(id=1,x=8,top=36,w=208,rows=[row('New track',edit_action=1),row('Demo course',edit_action=2),None,row('Save slot','S',edit_action=3),row('Load saved slot','L',disabled=cmp('equals',V('Saved exists'),0),edit_action=4),None,row('Remove goal',alt='Restore goal',edit_action=5),None,row('Save track code',action=[call('save track code')]),row('Load track code',edit_action=9)]),
-  dict(id=2,x=70,top=36,w=202,rows=[row('Undo','Z',disabled=cmp('equals',length('Undo Count'),0),edit_action=6),row('Redo','Y',disabled=cmp('equals',length('Redo Count'),0),edit_action=7),None,row('Step one frame','N',[call('step once')],step_disabled),row('Detach rider','X',[call('detach rider')],OR(editing_on,OR(at_end,cmp('equals',V('Timeline ready'),0)))),row('Return to editor','E',disabled=editing_on,edit_action=8)]),
-  dict(id=3,x=126,top=36,w=208,rows=[row('Zoom in','+',[call('zoom in')]),row('Zoom out','-',[call('zoom out')]),row('Fit track','F',[call('fit track')]),row('Start view','H',[call('home view')],editing_off),None,row('Grid and snapping','G',[call('toggle grid')],checked=cmp('equals',V('Grid'),1))]),
-  dict(id=4,x=184,top=36,w=190,rows=[row('Controls and storage',action=[call('toggle help')])]),
+  dict(id=2,x=68,top=36,w=202,rows=[row('Undo','Z',disabled=cmp('equals',length('Undo Count'),0),edit_action=6),row('Redo','Y',disabled=cmp('equals',length('Redo Count'),0),edit_action=7),None,row('Step one frame','N',[call('step once')],step_disabled),row('Detach rider','X',[call('detach rider')],OR(editing_on,OR(at_end,cmp('equals',V('Timeline ready'),0)))),row('Return to editor','E',disabled=editing_on,edit_action=8)]),
+  dict(id=3,x=114,top=36,w=208,rows=[row('Zoom in','+',[call('zoom in')]),row('Zoom out','-',[call('zoom out')]),row('Fit track','F',[call('fit track')]),row('Start view','H',[call('home view')],editing_off),None,row('Grid and snapping','G',[call('toggle grid')],checked=cmp('equals',V('Grid'),1))]),
+  dict(id=4,x=165,top=36,w=190,rows=[row('Controls and storage',action=[call('toggle help')])]),
+  dict(id=7,x=215,top=36,w=200,rows=[row('Smooth drawing',action=[setv('Setting smooth draw',1-V('Setting smooth draw'))],checked=cmp('equals',V('Setting smooth draw'),1)),row('Continuous erasing',action=[setv('Setting sweep erase',1-V('Setting sweep erase'))],checked=cmp('equals',V('Setting sweep erase'),1)),row('Large eraser',action=[setv('Setting large eraser',1-V('Setting large eraser'))],checked=cmp('equals',V('Setting large eraser'),1))]),
   dict(id=5,x=8,top=76,w=196,rows=[row(label,str(i+1),[setv('Tool',i)],editing_off,cmp('equals',V('Tool'),i)) for i,label in enumerate(['Pencil','Straight line','Eraser','Pan','Start flag','Goal flag'])]),
   dict(id=6,x=142,top=76,w=204,rows=[row(label,action=[setv('Brush',i)],disabled=editing_off,checked=cmp('equals',V('Brush'),i)) for i,label in enumerate(['Normal','Grip','Ice','Scenery','Acceleration','Reverse boost'])])]
  for menu in menus:
@@ -28,10 +29,10 @@ def define_controls(api):
    index+=1;r.update(y=y,index=index);y+=26
   menu['h']=y-menu['top']+6;menu['count']=index
  controls=[
-  dict(name='track',label='Track',x=8,y=7,w=56,h=26,menu=1),dict(name='edit',label='Edit',x=70,y=7,w=50,h=26,menu=2),dict(name='view',label='View',x=126,y=7,w=52,h=26,menu=3),dict(name='help',label='Help',x=184,y=7,w=50,h=26,menu=4),
+  dict(name='track',label='Track',x=8,y=7,w=56,h=26,menu=1,header=1),dict(name='edit',label='Edit',x=68,y=7,w=42,h=26,menu=2,header=1),dict(name='view',label='View',x=114,y=7,w=47,h=26,menu=3,header=1),dict(name='help',label='Help',x=165,y=7,w=46,h=26,menu=4,header=1),dict(name='settings',label='Settings',x=215,y=7,w=63,h=26,menu=7,header=1),
   dict(name='play',label='Run',x=284,y=43,w=188/3,h=26,action=[call('play or pause')]),dict(name='retry',label='Retry',x=284+188/3,y=43,w=188/3,h=26,action=[call('retry')]),dict(name='mode',label='Step',x=284+376/3,y=43,w=188/3,h=26,action=[call('step once')],disabled=step_disabled),
   dict(name='edit-mode',label='Edit',x=284,y=7,w=94,h=26,action=[call('select edit mode')]),dict(name='play-mode',label='Play',x=378,y=7,w=94,h=26,action=[call('select play mode')]),
-  dict(name='full-play',label='Fullscreen',x=244,y=5,w=32,h=32,action=[call('toggle full play')],disabled=editing_on),
+  dict(name='full-play',label='Fullscreen',x=440,y=311,w=24,h=24,action=[call('toggle full play')],disabled=editing_on),
   dict(name='tool',label='Pencil',x=8,y=43,w=124,h=26,menu=5,disabled=editing_off),dict(name='material',label='Normal',x=142,y=43,w=114,h=26,menu=6,disabled=editing_off)]
  def hit(x,y,w,h):return AND(AND(cmp('gt',V('Mouse X'),x-240),cmp('lt',V('Mouse X'),x+w-240)),AND(cmp('lt',V('Mouse Y'),180-y),cmp('gt',V('Mouse Y'),180-y-h)))
  globals()['hit']=hit
@@ -93,7 +94,7 @@ def render_controls(api):
  out += [setv('Mode selected','edit'),setv('Assembly hover',0),setv('Transport running',0),setv('Transport disabled',0),iff(cmp('equals',V('Editing'),0),[setv('Mode selected','play')]),iff(hit(284,7,94,26),[setv('Assembly hover',1)]),iff(hit(378,7,94,26),[setv('Assembly hover',2)]),iff(cmp('equals',V('Playing'),1),[setv('Transport running',1)]),iff(OR(cmp('equals',V('Playing'),1),cmp('gt',V('State'),2)),[setv('Transport disabled',1)])]
  for i in range(3):out += [iff(hit(284+i*188/3,43,188/3,26),[setv('Assembly hover',i+3)])]
  out += stamp(cat('play assembly ',V('Mode selected'),' ',V('Transport running'),' ',V('Transport disabled'),' ',V('Assembly hover')),138,142)
- out += [iff(cmp('equals',V('Editing'),0),stamp('control full-play Fullscreen normal',20,159))]
+ out += [iff(cmp('equals',V('Editing'),0),stamp('control full-play Fullscreen normal',212,-143))]
 
  return out
 
@@ -120,15 +121,15 @@ def build_assets(api):
   if name=='track':labels+=['Track*']
   if name=='tool':labels+=['Straight line','Eraser','Pan','Start flag','Goal flag']
   if name=='material':labels+=['Grip','Ice','Scenery','Acceleration','Reverse boost']
-  flat=name in ['track','edit','view','help']
+  flat=name in ['track','edit','view','help','settings']
   for label in labels:
    for state in ['normal','hover']+(['selected'] if c.get('menu') else [])+(['disabled'] if c.get('disabled') is not None else []):
     fill={'normal':'#f1eee8' if flat else '#faf8f5','hover':'#e5e0d7','selected':'#ded9cf' if c.get('menu') else '#30332f','disabled':'#f1eee8'}[state]
     ink='#faf8f5' if state=='selected' and not c.get('menu') else '#918b82' if state=='disabled' else '#30332f'
     border='none' if flat else '#d6d1c8'
-    cx=10 if c.get('menu') else w/2;anchor='start' if c.get('menu') else 'middle'
+    cx=(8 if c.get('header') else 10) if c.get('menu') else w/2;anchor='start' if c.get('menu') else 'middle'
     content=f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="3" fill="{fill}" stroke="{border}"/><text x="{cx}" y="{h/2+3.7}" text-anchor="{anchor}" font-family="sans-serif" font-size="11" fill="{ink}">{html.escape(label)}</text>'
-    if c.get('menu'):content+=f'<path d="M{w-15} 11l3 3 3-3" fill="none" stroke="{ink}" stroke-width="1.2"/>'
+    if c.get('menu'):content+=f'<path d="M{w-12 if c.get("header") else w-15} 11l3 3 3-3" fill="none" stroke="{ink}" stroke-width="1.2"/>'
     costumes.append(costume('control '+name+' '+label+' '+state,svg(w,h,content),w/2,h/2))
  for m in menus:
   w,h=m['w'],m['h'];content=f'<rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="3" fill="#faf8f5" stroke="#b6b1a9"/>'

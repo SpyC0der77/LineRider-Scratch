@@ -32,6 +32,7 @@ ROLES = {
         'begin erase gesture','erase endpoints touch','remove erase source',
         'bridge erased neighbor','delete eraser hit','pointer down normal','pointer drag',
         'pointer up','toggle finish goal','zoom in','zoom out','toggle grid',
+        'pull brush','sweep erase','erase sample',
     },
     'Menus': {
         'menu pointer','menu hover','menu keyboard','menu selection disabled',

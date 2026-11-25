@@ -1,12 +1,12 @@
 # Line Rider in Scratch
 
-Open [dist/Line Rider.sb3](dist/Line%20Rider.sb3) in Scratch using **File > Load from your computer**, then click the green flag. The project opens in Edit and calculates the demo ride. Drag the timeline at the bottom to inspect any frame, or click **Run** to play from the selected frame. The **Edit / Play** switch keeps the playhead in place. Track, Edit, View and Help are dropdown menus. The second row selects the active tool and material. Use Scratch's fullscreen stage for larger controls.
+Open [dist/Line Rider.sb3](dist/Line%20Rider.sb3) in Scratch using **File > Load from your computer**, then click the green flag. The project opens in Edit and calculates the demo ride. Drag the timeline at the bottom to inspect any frame, or click **Run** to play from the selected frame. The **Edit / Play** switch keeps the playhead in place. Track, Edit, View, Help and Settings are dropdown menus. The second row selects the active tool and material. Use Scratch's fullscreen stage for larger controls.
 
 The opening track and **Track > Demo course** use the same 413-segment rolling descent. The rider stays bound to the sled until the binding breaks. The timeline ends at that crash or when the mounted rider crosses the goal.
 
 The interface starts in mobile mode, with touch instructions and no keyboard shortcuts. Pressing any key on the stage switches to desktop mode. Typing into the track-code answer box does not switch modes. Mobile erasing repairs one skipped segment only when its connected neighbors were removed less than 350 ms apart during the same drag. It checks the original endpoints and stable segment IDs, so unrelated lines and separate gestures do not bridge. Undo restores the entire erase gesture.
 
-In Play, the expand icon beside the Edit / Play selector opens an uninterrupted view across the full Scratch stage. It hides the toolbars and timeline and expands the drawing bounds. The small corner icon returns to the current frame. A paused ride has a touch Play button. At the end, touch Retry or Edit. Scratch's own fullscreen control enlarges the player window.
+In Play, the expand icon at the right end of the timeline bar opens an uninterrupted view across the full Scratch stage. It hides the toolbars and timeline and expands the drawing bounds. The small corner icon returns to the current frame. A paused ride has a touch Play button. At the end, touch Retry or Edit. Scratch's own fullscreen control enlarges the player window.
 
 ## Editor
 
@@ -29,6 +29,11 @@ In Play, the expand icon beside the Edit / Play selector opens an uninterrupted 
 | Track > Load track code | Paste a code into Scratch's answer box. Empty input cancels. A valid load is undoable. |
 | Track > Demo course | Restore the long rolling course. Also undoable. |
 | Help > Controls and storage | Show controls and storage instructions. Click to close. |
+| Settings > Smooth drawing | Pencil stabilizer. The brush trails the pointer by 8 screen px, so small hand jitter does not reach the track. Checked when on. |
+| Settings > Continuous erasing | Erase along the path between pointer samples, so one fast swipe clears every line it crosses. Checked when on. |
+| Settings > Large eraser | Erase radius of 18 screen px instead of 9. The circle grows to match. Checked when on. |
+
+Settings work in Edit and Play. Their values are saved with the project, survive the green flag and Edit / Play switches, and create no undo entries or unsaved changes.
 
 Click a menu item to choose it. Disabled actions are muted. Click outside a menu, click its header again, or press Q to dismiss it; the dismissal click does not draw. With a menu open, Up/Down selects an enabled item and Enter activates it. Opening a menu suspends playback until it closes. Keyboard shortcuts work when menus are closed. Track and Edit menu actions that require editing remain available in Play mode. They first ask: This action will change the mode to "Edit". Are you sure you want to do this? Switch to Edit confirms and performs the requested action; Cancel leaves the mode, track and preview intact. Playback is frozen while the dialog is open and resumes on Cancel if it was running. Enter confirms and Q cancels. The same guard applies to S, L, Z, Y and E. Unavailable actions, such as loading an empty saved slot or undoing with no history, remain disabled. Step and Detach do not require switching to Edit. The explicit Edit mode switch still changes mode directly.
 
@@ -75,6 +80,7 @@ Use `python tools/build.py --testing` for a local project with capture and step 
 - `node tools/bench-vm.cjs [file.sb3] --runs N` times the full timeline calculation in a headless VM and hashes the cached poses; `node tools/profile-vm.cjs` breaks the time down by procedure.
 - `node tools/verify-timeline-resume.cjs [seed] [cases]` applies random edits in a headless VM and checks each resumed timeline against a full recalculation; `node tools/verify-resume-editor.mjs` does the same with real pencil and eraser strokes.
 - `node tools/verify-track-code.mjs` exercises native track code export and import. Build the local test fixture first.
+- `node tools/verify-settings.mjs` checks the Settings menu, persistence across modes, lazy pencil smoothing, continuous erasing and the large eraser. `node tools/capture-settings.mjs before|after` captures the menu screens on the testing fixture.
 
 The optional upload helper reads the account name from `SCRATCH_USERNAME` or an ignored `artifacts/scratch-upload.json` containing the existing Scratch project ID. It reads the password from a private file supplied at runtime.
 

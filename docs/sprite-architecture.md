@@ -4,7 +4,7 @@
 | --- | --- |
 | Game controller | The only frame loop, input dispatch, Edit/Play transitions, camera and playback controls. |
 | Physics | Sled and rider points, collisions, spatial grid, run results and timeline snapshots. |
-| Track editor | Pencil, line, eraser, mobile gap repair, flags, saved slot, undo/redo and track operations. |
+| Track editor | Pencil (with lazy smoothing), line, eraser (with continuous sweeping and large radius), mobile gap repair, flags, saved slot, undo/redo and track operations. |
 | Menus | Dropdown input, toolbar actions, keyboard navigation and mode-change confirmations. |
 | Track codes | LR1 encoding, validation, staged import and Scratch's native answer prompt. |
 | Renderer | Terrain, rider, controls, text and overlays. Owns the pen layer and all drawing costumes. |
