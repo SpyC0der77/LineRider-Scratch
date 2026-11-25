@@ -24,7 +24,7 @@ def extend_rider(body):
 
 def install(api):
     globals().update(api)
-    i, j, c = V('i'), V('j'), V('c')
+    i, j = V('i'), V('j')
     lists['Initial air'] = ['Initial air', lists['Air'][1][:]]
     proc('reset rider', [
         setv('i', 1),
@@ -38,45 +38,52 @@ def install(api):
         ]),
         setv('Mounted', 1), setv('Frame', 0), call('update rider pose'),
     ])
-    proc('integrate points', [
-        setv('i', 1),
-        # The first 17 points are physical, including the scarf.
-        loop(17, [
-            setv('vx', (L('X', i) - L('PX', i)) * (1 - L('Air', i))),
-            setv('vy', (L('Y', i) - L('PY', i)) * (1 - L('Air', i)) + .175),
-            replace('VX', i, V('vx')), replace('VY', i, V('vy')),
-            replace('PX', i, L('X', i)), replace('PY', i, L('Y', i)),
-            replace('X', i, L('X', i) + V('vx')), replace('Y', i, L('Y', i) + V('vy')),
-            change('i', 1),
-        ]),
-    ])
-
-    a, b = V('a'), V('b')
     dx, dy, distance, diff = V('dx'), V('dy'), V('distance'), V('diff')
-    kind, rest = L('Kind', c), L('Rest', c)
-    solve = [
-        setv('a', L('CA', c)), setv('b', L('CB', c)),
-        setv('dx', L('X', a) - L('X', b)), setv('dy', L('Y', a) - L('Y', b)),
-        setv('distance', mathop('sqrt', dx * dx + dy * dy)),
-        iff(cmp('gt', distance, 0), [
-            setv('diff', (distance - rest) / distance * .5),
-            iff(AND(cmp('equals', kind, 1), cmp('gt', diff, L('Endurance', c))),
-                [setv('Mounted', 0)],
-                [iff(OR(cmp('lt', kind, 2), cmp('lt', distance, rest)), [
-                    replace('X', a, L('X', a) - dx * diff),
-                    replace('Y', a, L('Y', a) - dy * diff),
-                    replace('X', b, L('X', b) + dx * diff),
-                    replace('Y', b, L('Y', b) + dy * diff),
-                ])]),
-        ]),
-    ]
-    proc('solve sticks', [
-        setv('c', 1),
-        loop(len(cons), [
-            iff(OR(NOT(cmp('equals', kind, 1)), cmp('equals', V('Mounted'), 1)), solve),
-            change('c', 1),
-        ]),
-    ])
+    # The first 17 points are physical, including the scarf. Indices and the
+    # build-time Air values are literals; (1 - air) stays an explicit operator.
+    integrate = []
+    for k in range(1, 18):
+        drag = op('subtract', 1, lists['Air'][1][k - 1])
+        integrate += [
+            setv('vx', (L('X', k) - L('PX', k)) * drag),
+            setv('vy', (L('Y', k) - L('PY', k)) * drag + .175),
+            replace('VX', k, V('vx')), replace('VY', k, V('vy')),
+            replace('PX', k, L('X', k)), replace('PY', k, L('Y', k)),
+            replace('X', k, L('X', k) + V('vx')), replace('Y', k, L('Y', k) + V('vy')),
+        ]
+    proc('integrate points', integrate)
+
+    def solve_stick(n):
+        # Stick constraint n (0-based) with its build-time endpoints, kind and endurance as literals.
+        a, b = lists['CA'][1][n], lists['CB'][1][n]
+        rest, kind, endurance = lists['Rest'][1][n], lists['Kind'][1][n], lists['Endurance'][1][n]
+        move = [
+            replace('X', a, L('X', a) - dx * diff),
+            replace('Y', a, L('Y', a) - dy * diff),
+            replace('X', b, L('X', b) + dx * diff),
+            replace('Y', b, L('Y', b) + dy * diff),
+        ]
+        relax = [setv('diff', (distance - rest) / distance * .5)]
+        if kind == 0:
+            body = relax + move
+        elif kind == 1:
+            body = relax + [iff(cmp('gt', diff, endurance), [setv('Mounted', 0)], move)]
+        else:
+            body = relax + [iff(cmp('lt', distance, rest), move)]
+        block = [
+            setv('dx', L('X', a) - L('X', b)), setv('dy', L('Y', a) - L('Y', b)),
+            setv('distance', mathop('sqrt', dx * dx + dy * dy)),
+            iff(cmp('gt', distance, 0), body),
+        ]
+        # Bind sticks stop applying once the rider is detached.
+        if kind == 1:
+            block = [iff(cmp('equals', V('Mounted'), 1), block)]
+        return block
+
+    solve = []
+    for n in range(len(lists['CA'][1])):
+        solve += solve_stick(n)
+    proc('solve sticks', solve)
 
     nx, ny, material = L('NX', j), L('NY', j), L('Material', j)
     ox, oy, depth, along = V('ox'), V('oy'), V('depth'), V('along')
