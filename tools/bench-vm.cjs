@@ -31,15 +31,17 @@ const sha256 = list => crypto.createHash('sha256').update(JSON.stringify(list)).
 // Steps the runtime until the predicate holds; tick time is measured around each _step call only.
 function stepUntil(vm, done, label) {
     const start = performance.now();
-    let ticks = 0, tickMs = 0;
+    let ticks = 0, tickMs = 0, maxTickMs = 0;
     while (!done()) {
         if (performance.now() - start > TIMEOUT_MS) throw new Error(`Timed out after ${TIMEOUT_MS} ms: ${label}`);
         const t0 = performance.now();
         vm.runtime._step();
-        tickMs += performance.now() - t0;
+        const dt = performance.now() - t0;
+        tickMs += dt;
+        maxTickMs = Math.max(maxTickMs, dt);
         ticks++;
     }
-    return {ticks, tickMs, wallMs: performance.now() - start};
+    return {ticks, tickMs, maxTickMs, wallMs: performance.now() - start};
 }
 
 async function oneRun(withRecalc) {
@@ -55,6 +57,7 @@ async function oneRun(withRecalc) {
         total_ms: performance.now() - t0,
         ticks: first.ticks,
         tick_ms: first.tickMs,
+        max_tick_ms: first.maxTickMs,
         ms_per_frame: first.tickMs / end,
         timeline_end: end,
         hash_X: sha256(getList(vm, 'Timeline X')),
@@ -84,7 +87,7 @@ const round = o => JSON.parse(JSON.stringify(o, (k, v) => typeof v === 'number' 
     for (let i = 0; i < runs; i++) results.push(await oneRun(true));
     const recalcRuns = results.map(r => r.recalc).filter(Boolean);
     const first = results[0];
-    const runRows = results.map(({total_ms, ticks, tick_ms, ms_per_frame}) => ({total_ms, ticks, tick_ms, ms_per_frame}));
+    const runRows = results.map(({total_ms, ticks, tick_ms, max_tick_ms, ms_per_frame}) => ({total_ms, ticks, tick_ms, max_tick_ms, ms_per_frame}));
     const out = {
         file,
         runs: runRows,
