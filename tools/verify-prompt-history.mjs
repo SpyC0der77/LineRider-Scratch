@@ -1,6 +1,6 @@
 import {EditorSession} from './editor-session.mjs';import fs from 'node:fs/promises';import assert from 'node:assert/strict';
 process.env.SCRATCH_OPTIMIZER_HEADLESS='1';process.env.LINE_RIDER_RELEASE_TEST='1';
-const root='C:/Users/Carter/code/Scratch/Line Rider',s=new EditorSession(),before=process.argv.includes('--before'),wait=ms=>new Promise(r=>setTimeout(r,ms));
+const root=decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,''),s=new EditorSession(),before=process.argv.includes('--before'),wait=ms=>new Promise(r=>setTimeout(r,ms));
 try{
  await s.openFile(root+'/dist/Line Rider.sb3');const extracted=await s.extract();await s.call('green_flag');await wait(400);await s.call('stop_button');const page=s.requirePage();
  await page.screenshot({path:root+'/artifacts/prompt-history-'+(before?'before':'after')+'.png'});

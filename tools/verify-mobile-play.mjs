@@ -1,6 +1,6 @@
 import {EditorSession} from './editor-session.mjs';import fs from 'node:fs/promises';import assert from 'node:assert/strict';
 process.env.SCRATCH_OPTIMIZER_HEADLESS='1';
-const root='C:/Users/Carter/code/Scratch/Line Rider',s=new EditorSession();
+const root=decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,''),s=new EditorSession();
 const wait=ms=>new Promise(r=>setTimeout(r,ms)), state=()=>s.call('get_variable_list_data');
 async function until(c,label){const start=Date.now();while(Date.now()-start<18000){const v=await state();if(c(v))return v;await wait(25);}throw new Error('Timed out '+label);}
 async function click(x,y){await s.clickStage(x-240,180-y);}

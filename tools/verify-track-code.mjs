@@ -2,7 +2,7 @@ import {EditorSession} from './editor-session.mjs';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 process.env.SCRATCH_OPTIMIZER_HEADLESS='1';
-const root='C:/Users/Carter/code/Scratch/Line Rider', s=new EditorSession();
+const root=decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,''), s=new EditorSession();
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const state=()=>s.call('get_variable_list_data');
 async function until(check,label,ms=25000){const start=Date.now();while(Date.now()-start<ms){const v=await state();if(check(v))return v;await wait(35);}throw new Error('Timed out '+label);}

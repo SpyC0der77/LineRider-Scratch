@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 const DEFAULT_PROJECT=JSON.parse(readFileSync(new URL('../dist/project.json',import.meta.url),'utf8')).targets[0];const DEFAULT_SEGMENTS=DEFAULT_PROJECT.lists.LX[1].length;const DEFAULT_GOAL_Y=DEFAULT_PROJECT.variables['Goal Y'][1];
 import {EditorSession} from './editor-session.mjs';import fs from 'node:fs/promises';import assert from 'node:assert/strict';
-process.env.SCRATCH_OPTIMIZER_HEADLESS='1';const root='C:/Users/Carter/code/Scratch/Line Rider';const s=new EditorSession();const wait=ms=>new Promise(r=>setTimeout(r,ms));const state=()=>s.call('get_variable_list_data');
+process.env.SCRATCH_OPTIMIZER_HEADLESS='1';const root=decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,'');const s=new EditorSession();const wait=ms=>new Promise(r=>setTimeout(r,ms));const state=()=>s.call('get_variable_list_data');
 async function until(check,label){for(let i=0;i<600;i++){const v=await state();if(check(v))return v;await wait(20);}throw new Error('Timed out '+label);}
 async function click(x,y){await s.clickStage(x-240,180-y);}
 async function key(k){await s.pressKeys([{key:k==='enter'?'Enter':k,hold_duration_ms:100,time_after_last_key_press_ms:100}]);}
@@ -24,5 +24,5 @@ try{
  await click(315.3333333333333,56);await until(v=>+v.variables.Playing===1&&+v.variables.Frame>3,'running');v=await requestNew();const frozen=+v.variables.Frame;assert.equal(+v.variables.Playing,1);await wait(350);assert.equal(+(await state()).variables.Frame,frozen);await cancel();await until(v=>+v.variables.Frame>frozen,'resume after cancel');v=await state();assert.equal(+v.variables.Playing,1);assert.equal(+v.variables.Editing,0);assert.equal(v.lists.LX.items.length,DEFAULT_SEGMENTS);console.log('PASS running simulation freezes for modal and resumes on Cancel without resetting');
  v=await requestNew();await accept();v=await state();assert.equal(+v.variables.Playing,0);assert.equal(+v.variables.Editing,1);assert.equal(v.lists.LX.items.length,0);console.log('PASS confirmation stops a running ride and performs requested action');
  // Demo restores the original course, not the owner's preserved current canvas.
- await menu(1);await click(95,80);v=await until(v=>v.lists.LX.items.length===140,'Demo in edit');assert.equal(+v.variables['Confirm open'],0);console.log('PASS editing actions remain immediate while already in Edit');
+ await menu(1);await click(95,80);v=await until(v=>v.lists.LX.items.length===DEFAULT_SEGMENTS,'Demo in edit');assert.equal(+v.variables['Confirm open'],0);console.log('PASS editing actions remain immediate while already in Edit');
 }finally{await s.close();}

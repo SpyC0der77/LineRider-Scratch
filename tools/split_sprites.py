@@ -94,12 +94,12 @@ def split(project, make_costume, svg):
         for name,key in roots.items():
             if owner[name]==module:
                 keys=walk(blocks,[key]);assert not used.intersection(keys);used.update(keys)
-                target['blocks'].update({k:copy.deepcopy(blocks[k]) for k in keys})
+                target["blocks"].update({k:copy.deepcopy(blocks[k]) for k in blocks if k in keys})
         if module=='Game controller':
             for key,block in blocks.items():
                 if block.get('topLevel') and block['opcode'].startswith('event_'):
                     keys=walk(blocks,[key]);assert not used.intersection(keys);used.update(keys)
-                    target['blocks'].update({k:copy.deepcopy(blocks[k]) for k in keys})
+                    target["blocks"].update({k:copy.deepcopy(blocks[k]) for k in blocks if k in keys})
         targets[module]=target
     assert used==set(blocks),'Unassigned blocks'
     exported=set();requests=Counter()

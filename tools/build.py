@@ -332,9 +332,11 @@ report['modules']=module_report
 # Test hooks are separate; the delivered .sb3 contains no capture/step test state.
 def write_project(path,data):
  used={c['md5ext'] for t in data['targets'] for c in t['costumes']}
+ # Fixed timestamps keep the archive byte-identical across rebuilds.
+ def entry(name):return zipfile.ZipInfo(name,(2000,1,1,0,0,0))
  with zipfile.ZipFile(path,'w',zipfile.ZIP_DEFLATED) as z:
-  z.writestr('project.json',json.dumps(data))
-  for name in sorted(used):z.writestr(name,assets[name])
+  z.writestr(entry('project.json'),json.dumps(data),zipfile.ZIP_DEFLATED)
+  for name in sorted(used):z.writestr(entry(name),assets[name],zipfile.ZIP_DEFLATED)
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--testing',action='store_true',help='also build a local project with test controls')
 args=parser.parse_args()

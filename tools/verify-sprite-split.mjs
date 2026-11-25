@@ -1,6 +1,6 @@
 import {EditorSession} from './editor-session.mjs';import fs from 'node:fs/promises';import assert from 'node:assert/strict';
 process.env.SCRATCH_OPTIMIZER_HEADLESS='1';process.env.LINE_RIDER_RELEASE_TEST='1';
-const root='C:/Users/Carter/code/Scratch/Line Rider',s=new EditorSession(),before=process.argv.includes('--before'),wait=ms=>new Promise(r=>setTimeout(r,ms));
+const root=decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,''),s=new EditorSession(),before=process.argv.includes('--before'),wait=ms=>new Promise(r=>setTimeout(r,ms));
 const state=()=>s.call('get_variable_list_data');
 async function until(c,label){const start=Date.now();while(Date.now()-start<20000){const v=await state();if(c(v))return v;await wait(30);}throw Error('Timeout '+label);}
 try{

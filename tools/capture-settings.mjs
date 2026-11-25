@@ -7,7 +7,7 @@ import {resolve} from 'node:path';
 // Captures the editor at startup, the Help dropdown and (after) the Settings dropdown.
 process.env.SCRATCH_OPTIMIZER_HEADLESS = '1';
 const phase = process.argv[2] ?? 'after';
-const root = 'C:/Users/Carter/code/Scratch/Line Rider';
+const root = decodeURIComponent(new URL('..',import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:)/,'').replace(/\/$/,'');
 const s = new EditorSession();
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const state = () => s.call('get_variable_list_data');

@@ -20,3 +20,22 @@ __pycache__/
 # Git administration data from vendored repositories is not project source.
 **/.git/
 **/.git-local-metadata/
+
+# Outputs written by the test and capture scripts. Commit a screenshot
+# deliberately with `git add -f` when it documents a change.
+/artifacts/*.json
+/artifacts/demo-track-code.txt
+/artifacts/acceleration-*
+/artifacts/confirm-*.png
+/artifacts/desktop-*.png
+/artifacts/fullscreen-*.png
+/artifacts/load-code-*.png
+/artifacts/save-code-*.png
+/artifacts/mobile-*.png
+/artifacts/menus-*.png
+/artifacts/prompt-*.png
+/artifacts/sprites-*
+/artifacts/converter-*.png
+/artifacts/scratch-*
+/artifacts/settings-test-*
+/tools/__pycache__/
