@@ -23,6 +23,7 @@ ROLES = {
         'reset rider','integrate points','physics frame','solve sticks','finish frame','update rider pose',
         'collide points with lines','build spatial grid','nearby lines',
         'check result','update timeline','record timeline frame','resolve timeline resume',
+        'dead end start','dead end step','replay dead ends','scan dead ends',
     },
     'Track editor': {
         'begin change','push Undo','push Redo','restore Undo','restore Redo','undo','redo',

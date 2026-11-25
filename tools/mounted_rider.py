@@ -109,6 +109,7 @@ def install(api):
         resolve_contact.append(iff(cmp('equals', material, material_id), [
             replace('PX', i, L('PX', i) - ny * .1 * direction),
             replace('PY', i, L('PY', i) + nx * .1 * direction),
+            setv('Frame boost', 1),
         ]))
     # Refresh the cached point position after every resolve so later candidates see it.
     resolve_contact += [setv('point x', L('X', i)), setv('point y', L('Y', i))]

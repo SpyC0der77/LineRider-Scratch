@@ -32,6 +32,7 @@ In Play, the expand icon at the right end of the timeline bar opens an uninterru
 | Settings > Smooth drawing | Pencil stabilizer. The brush trails the pointer by 8 screen px, so small hand jitter does not reach the track. Checked when on. |
 | Settings > Continuous erasing | Erase along the path between pointer samples, so one fast swipe clears every line it crosses. Checked when on. |
 | Settings > Large eraser | Erase radius of 18 screen px instead of 9. The circle grows to match. Checked when on. |
+| Settings > Stop dead-end rides | Ends a ride as **Dead end** after 450 frames (15 s) without leaving its explored area or touching an acceleration line. Checked when on. |
 
 Settings work in Edit and Play. Their values are saved with the project, survive the green flag and Edit / Play switches, and create no undo entries or unsaved changes.
 
@@ -54,6 +55,7 @@ Normal lines apply contact friction. Grip lines add damping along the track tang
 - **Edit > Return to editor / E** stops playback at the current frame so you can edit with the rider in view.
 - **X** detaches the rider for a crash test. Retry restores the original run.
 - A ride with no earlier finish or crash can reach Scratch's storage limit at frame 9,089. The status bar labels that endpoint **Preview limit**.
+- A rider that stays in one area without acceleration contact for 15 seconds ends as **Dead end**, so a bowl does not calculate to the storage limit. Turning the setting off recomputes the ride to the limit.
 
 ## Keeping your tracks
 
@@ -79,6 +81,7 @@ Use `python tools/build.py --testing` for a local project with capture and step 
 - `node tools/verify-stroke-timeline.mjs` checks live drawing, calculation after release, and the loading spinner.
 - `node tools/bench-vm.cjs [file.sb3] --runs N` times the full timeline calculation in a headless VM and hashes the cached poses; `node tools/profile-vm.cjs` breaks the time down by procedure.
 - `node tools/verify-timeline-resume.cjs [seed] [cases]` applies random edits in a headless VM and checks each resumed timeline against a full recalculation; `node tools/verify-resume-editor.mjs` does the same with real pencil and eraser strokes.
+- `node tools/verify-dead-end.cjs` runs bowls in a headless VM: dead-end endings, acceleration bowls, the setting toggle and edits, each checked against a full recalculation.
 - `node tools/verify-track-code.mjs` exercises native track code export and import. Build the local test fixture first.
 - `node tools/verify-settings.mjs` checks the Settings menu, persistence across modes, lazy pencil smoothing, continuous erasing and the large eraser. `node tools/capture-settings.mjs before|after` captures the menu screens on the testing fixture.
 

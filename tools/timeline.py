@@ -5,11 +5,19 @@
 CACHE_LISTS = ('X', 'Y', 'PX', 'PY')
 SOLVER_LISTS = CACHE_LISTS + ('VX', 'VY')
 CACHE_VARIABLES = ('Ride result', 'Mounted')
+# Per-frame flags. 'Boost' is 1 when an acceleration line resolved a contact that frame.
+FRAME_FLAGS = ('Boost',)
+# Dead-end rule: result 6 when the hip has stayed inside its explored box (plus slack)
+# and no acceleration contact has resolved for DEAD_END_FRAMES frames.
+DEAD_END_RESULT = 6
+DEAD_END_FRAMES = 450
+DEAD_END_SLACK = 2
+DEAD_END_SETTING = 'Setting stop dead ends'
 # Per frame, the bounding box of grid cells queried by collisions. A line can
 # only influence a frame if one of its cells falls inside that box.
 CELL_BOUNDS = ('Cell X0', 'Cell X1', 'Cell Y0', 'Cell Y1')
 DIRTY_BOUNDS = (('X0', 'MinX'), ('X1', 'MaxX'), ('Y0', 'MinY'), ('Y1', 'MaxY'))
-SNAPSHOT = ('Spawn X', 'Spawn Y', 'Goal X', 'Goal Y', 'Goal enabled', 'Lowest track', 'Timeline detach frame')
+SNAPSHOT = ('Spawn X', 'Spawn Y', 'Goal X', 'Goal Y', 'Goal enabled', 'Lowest track', 'Timeline detach frame', DEAD_END_SETTING)
 CANVAS_BOTTOM = -130
 RAIL_LEFT = -226
 RAIL_RIGHT = 68
@@ -148,7 +156,7 @@ def mark_all(api):
 def reset_frame_cells(api):
     setv = api['setv']
     return [setv('Candidates key', 'none'), setv('Frame cell X0', 1e9), setv('Frame cell X1', -1e9),
-            setv('Frame cell Y0', 1e9), setv('Frame cell Y1', -1e9)]
+            setv('Frame cell Y0', 1e9), setv('Frame cell Y1', -1e9), setv('Frame boost', 0)]
 
 
 def track_frame_cells(api):
@@ -168,7 +176,7 @@ def install(api):
     last_storable_frame = 200_000 // point_count - 1
     for name in SOLVER_LISTS:
         lists['Physics ' + name] = ['Physics ' + name, lists[name][1][:]]
-    for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS:
+    for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS + FRAME_FLAGS:
         lists['Timeline ' + name] = ['Timeline ' + name, []]
 
     point = V('Timeline point')
@@ -188,11 +196,66 @@ def install(api):
             for name in CACHE_LISTS
         ] + [change('Timeline point', 1)]),
     ] + [add('Timeline ' + name, V('Physics ' + name)) for name in CACHE_VARIABLES]
-      + [add('Timeline ' + name, V('Frame ' + name.replace('Cell', 'cell'))) for name in CELL_BOUNDS])
+      + [add('Timeline ' + name, V('Frame ' + name.replace('Cell', 'cell'))) for name in CELL_BOUNDS]
+      + [add('Timeline Boost', V('Frame boost'))])
 
     define_result_check(simulation_api(api))
     hip_x = L('Physics X', 5)
     hip_y = L('Physics Y', 5)
+
+    # Dead-end detector. 'Box' is the hip's explored bounds, 'Stuck since' the last
+    # frame that moved it beyond the box plus slack or resolved an acceleration contact.
+    # 'dead end step' reads Dead frame, Dead hip X/Y and Dead boost, so the live solver
+    # and the cache replays share one rule.
+    proc('dead end start', [
+        setv('Box min X', V('Dead hip X')), setv('Box max X', V('Dead hip X')),
+        setv('Box min Y', V('Dead hip Y')), setv('Box max Y', V('Dead hip Y')),
+        setv('Stuck since', 0),
+    ])
+    dead_x, dead_y = V('Dead hip X'), V('Dead hip Y')
+    outside = OR(
+        OR(cmp('lt', dead_x, V('Box min X') - DEAD_END_SLACK), cmp('gt', dead_x, V('Box max X') + DEAD_END_SLACK)),
+        OR(cmp('lt', dead_y, V('Box min Y') - DEAD_END_SLACK), cmp('gt', dead_y, V('Box max Y') + DEAD_END_SLACK)),
+    )
+    proc('dead end step', [
+        iff(outside, [setv('Stuck since', V('Dead frame'))]),
+        iff(cmp('lt', dead_x, V('Box min X')), [setv('Box min X', dead_x)]),
+        iff(cmp('gt', dead_x, V('Box max X')), [setv('Box max X', dead_x)]),
+        iff(cmp('lt', dead_y, V('Box min Y')), [setv('Box min Y', dead_y)]),
+        iff(cmp('gt', dead_y, V('Box max Y')), [setv('Box max Y', dead_y)]),
+        iff(cmp('equals', V('Dead boost'), 1), [setv('Stuck since', V('Dead frame'))]),
+    ])
+    # Rebuilds the detector for frames 0..Physics Frame from the cache before a restore.
+    proc('replay dead ends', [
+        setv('Dead frame', 0),
+        setv('Dead hip X', L('Timeline X', 5)), setv('Dead hip Y', L('Timeline Y', 5)),
+        call('dead end start'),
+        setv('Dead frame', 1),
+        loop(V('Physics Frame'), [
+            setv('Dead hip X', L('Timeline X', V('Dead frame') * point_count + 5)),
+            setv('Dead hip Y', L('Timeline Y', V('Dead frame') * point_count + 5)),
+            setv('Dead boost', L('Timeline Boost', V('Dead frame') + 1)),
+            call('dead end step'),
+            change('Dead frame', 1),
+        ]),
+    ])
+    # Turning detection on: the first cached frame below the resume bound that would end.
+    proc('scan dead ends', [
+        setv('Dead frame', 0),
+        setv('Dead hip X', L('Timeline X', 5)), setv('Dead hip Y', L('Timeline Y', 5)),
+        call('dead end start'),
+        setv('Dead frame', 1),
+        until(NOT(cmp('lt', V('Dead frame'), V('Timeline resume'))), [
+            setv('Dead hip X', L('Timeline X', V('Dead frame') * point_count + 5)),
+            setv('Dead hip Y', L('Timeline Y', V('Dead frame') * point_count + 5)),
+            setv('Dead boost', L('Timeline Boost', V('Dead frame') + 1)),
+            call('dead end step'),
+            iff(AND(cmp('equals', L('Timeline Ride result', V('Dead frame') + 1), 1),
+                    cmp('gt', V('Dead frame') - V('Stuck since'), DEAD_END_FRAMES - 1)),
+                [setv('Timeline resume', V('Dead frame'))]),
+            change('Dead frame', 1),
+        ]),
+    ])
 
     # Frames before the first one an edit can influence are kept, and the
     # solver resumes from the last kept frame. Physics is sequential, so a
@@ -240,6 +303,13 @@ def install(api):
             iff(AND(cmp('gt', V('Timeline used Timeline detach frame'), 0), cmp('lt', V('Timeline used Timeline detach frame'), resume)),
                 [setv('Timeline resume', V('Timeline used Timeline detach frame'))]),
         ]),
+        # Turning detection off only changes a frame that ended as a dead end: recompute from it.
+        iff(changed(DEAD_END_SETTING), [
+            iff(cmp('equals', V('Timeline used ' + DEAD_END_SETTING), 1), [
+                iff(AND(cmp('equals', L('Timeline Ride result', end + 1), DEAD_END_RESULT), cmp('lt', end, resume)),
+                    [setv('Timeline resume', end)]),
+            ], [call('scan dead ends')]),
+        ]),
     ] + [setv('Timeline used ' + name, V(name)) for name in SNAPSHOT] + [
         setv('Timeline dirty', 0), setv('Timeline dirty all', 0), setv('Timeline expected lines', length('LX')),
     ])
@@ -252,9 +322,10 @@ def install(api):
             setv('Timeline current pose', 0),
             call('resolve timeline resume'),
             iff(cmp('equals', resume, 0), [
-                clear('Timeline ' + name) for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS
+                clear('Timeline ' + name) for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS + FRAME_FLAGS
             ] + [
                 call('reset rider'),
+                setv('Dead frame', 0), setv('Dead hip X', hip_x), setv('Dead hip Y', hip_y), call('dead end start'),
                 setv('Physics Ride result', 1),
             ] + reset_frame_cells(api) + [
                 call('record timeline frame'),
@@ -269,8 +340,9 @@ def install(api):
             ] + [setv('Physics ' + name, L('Timeline ' + name, resume)) for name in CACHE_VARIABLES] + [
                 setv('Physics Frame', resume - 1),
                 loop((end - resume + 1) * point_count, [delete('Timeline ' + name) for name in CACHE_LISTS]),
-                loop(end - resume + 1, [delete('Timeline ' + name) for name in CACHE_VARIABLES + CELL_BOUNDS]),
+                loop(end - resume + 1, [delete('Timeline ' + name) for name in CACHE_VARIABLES + CELL_BOUNDS + FRAME_FLAGS]),
                 setv('Timeline end', resume - 1),
+                call('replay dead ends'),
                 iff(cmp('gt', physics_result, 1), [setv('Timeline ready', 1)]),
             ]),
             iff(cmp('gt', target, 0), [setv('Timeline refocus', 1)]),
@@ -289,9 +361,16 @@ def install(api):
                 ]),
             ] + reset_frame_cells(api) + [
                 call('physics frame'),
+                setv('Dead hip X', hip_x), setv('Dead hip Y', hip_y),
+                setv('Dead boost', V('Frame boost')), setv('Dead frame', physics_frame),
+                call('dead end step'),
                 call('check result'),
                 iff(AND(cmp('equals', physics_result, 1), cmp('equals', physics_frame, last_storable_frame)), [
                     setv('Physics Ride result', 5),
+                ]),
+                iff(AND(AND(cmp('equals', physics_result, 1), cmp('equals', V(DEAD_END_SETTING), 1)),
+                        cmp('gt', physics_frame - V('Stuck since'), DEAD_END_FRAMES - 1)), [
+                    setv('Physics Ride result', DEAD_END_RESULT),
                 ]),
                 call('record timeline frame'),
                 setv('Timeline end', physics_frame),
