@@ -1,4 +1,5 @@
 """Mobile-first input and conservative repair of single-segment erase gaps."""
+from timeline import mark_line
 
 
 def install(api):
@@ -21,7 +22,7 @@ def install(api):
             *(L('Undo LY',V('Erase A')) + L('Undo DY',V('Erase A'))*end_a - L('Undo LY',V('Erase B')) - L('Undo DY',V('Erase B'))*end_b),
             .0004), [setv('Erase touch',1)]) for end_a in [0,1] for end_b in [0,1]])
     proc('remove erase source', [setv('Erase index',itemindex('Erase source IDs',V('Erase candidate'))),
-        iff(cmp('gt',V('Erase index'),0), [delete(f,V('Erase index')) for f in FIELDS]+[
+        iff(cmp('gt',V('Erase index'),0), mark_line(api,V('Erase index'),-1)+[delete(f,V('Erase index')) for f in FIELDS]+[
             delete('Erase source IDs',V('Erase index')), replace('Erase times',V('Erase candidate'),Expr('sensing_timer')+.001),setv('Grid ready',0)])])
     proc('bridge erased neighbor', [
         iff(AND(AND(cmp('gt',V('Erase other'),0),cmp('lt',V('Erase other'),length('Erase times')+1)),
@@ -34,4 +35,4 @@ def install(api):
         setv('Erase hit source',L('Erase source IDs',V('erase id'))),setv('Erase candidate',V('Erase hit source')),call('remove erase source')
     ] + sum(([
         setv('Erase candidate',V('Erase hit source')+direction),setv('Erase other',V('Erase hit source')+direction*2),call('bridge erased neighbor')
-    ] for direction in [-1,1]),[]), [delete(f,V('erase id')) for f in FIELDS]+[setv('Grid ready',0)])])
+    ] for direction in [-1,1]),[]), mark_line(api,V('erase id'),-1)+[delete(f,V('erase id')) for f in FIELDS]+[setv('Grid ready',0)])])

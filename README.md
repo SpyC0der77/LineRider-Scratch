@@ -42,6 +42,7 @@ Normal lines apply contact friction. Grip lines add damping along the track tang
 
 - **Timeline** pauses playback and moves to the frame under the pointer. It works in Edit and Play. The last frame is the first crash or the mounted crossing of the goal.
 - The timeline recalculates when you release a stroke or finish moving a flag. The spinner appears during recalculation. If the edited ride ends sooner, the playhead shows that end. Undo can bring the original frame back into range.
+- Recalculation keeps every cached frame before the first one an edit can reach and resumes from there. Each frame records the grid cells its collisions queried, so a stroke or erase only recomputes from where the rider first comes near it. Moving the goal resumes at the first goal crossing, and detaching resumes at the detach frame. Moving the start, Undo/Redo, loading a track and importing a code recalculate from frame 0.
 - **Run / Space** plays from the selected frame, or starts over from the end. Click again to pause.
 - **Step / N** advances one frame and stays paused. Step is disabled during playback and at the end.
 - **Retry / R** returns to frame zero. In Edit it also restores the start view. In Play it starts playback.
@@ -71,6 +72,8 @@ Use `python tools/build.py --testing` for a local project with capture and step 
 
 - `node tools/verify-timeline.mjs` checks the full ride through frame 348, scrubbing, flag edits, Undo and crashes.
 - `node tools/verify-stroke-timeline.mjs` checks live drawing, calculation after release, and the loading spinner.
+- `node tools/bench-vm.cjs [file.sb3] --runs N` times the full timeline calculation in a headless VM and hashes the cached poses; `node tools/profile-vm.cjs` breaks the time down by procedure.
+- `node tools/verify-timeline-resume.cjs [seed] [cases]` applies random edits in a headless VM and checks each resumed timeline against a full recalculation; `node tools/verify-resume-editor.mjs` does the same with real pencil and eraser strokes.
 - `node tools/verify-track-code.mjs` exercises native track code export and import. Build the local test fixture first.
 
 The optional upload helper reads the account name from `SCRATCH_USERNAME` or an ignored `artifacts/scratch-upload.json` containing the existing Scratch project ID. It reads the password from a private file supplied at runtime.

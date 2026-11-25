@@ -103,20 +103,29 @@ def install(api):
             replace('PX', i, L('PX', i) - ny * .1 * direction),
             replace('PY', i, L('PY', i) + nx * .1 * direction),
         ]))
+    # Refresh the cached point position after every resolve so later candidates see it.
+    resolve_contact += [setv('point x', L('X', i)), setv('point y', L('Y', i))]
     contact = [
-        setv('ox', L('X', i) - L('LX', j)), setv('oy', L('Y', i) - L('LY', j)),
+        setv('ox', V('point x') - L('LX', j)), setv('oy', V('point y') - L('LY', j)),
         setv('depth', ox * nx + oy * ny),
-        setv('along', (ox * L('DX', j) + oy * L('DY', j)) * L('InvSq', j)),
-        iff(AND(
-            AND(cmp('gt', depth, 0), cmp('lt', depth, 10)),
-            AND(AND(cmp('gt', along, -.000001), cmp('lt', along, 1.000001)),
-                cmp('gt', nx * L('VX', i) + ny * L('VY', i), 0)),
-        ), resolve_contact),
+        # Scratch evaluates both operands of and/or, so nest the tests to skip later work.
+        iff(cmp('gt', depth, 0), [
+            iff(cmp('lt', depth, 10), [
+                setv('along', (ox * L('DX', j) + oy * L('DY', j)) * L('InvSq', j)),
+                iff(cmp('gt', along, -.000001), [
+                    iff(cmp('lt', along, 1.000001), [
+                        iff(cmp('gt', nx * L('VX', i) + ny * L('VY', i), 0), resolve_contact),
+                    ]),
+                ]),
+            ]),
+        ]),
     ]
     proc('collide points with lines', [
         setv('i', 1),
         loop(10, [
-            call('nearby lines'), setv('k', 1),
+            call('nearby lines'),
+            setv('point x', L('X', i)), setv('point y', L('Y', i)),
+            setv('k', 1),
             loop(length('Candidates'), [
                 setv('j', L('Candidates', V('k'))),
                 iff(NOT(cmp('equals', material, 3)), contact), change('k', 1),

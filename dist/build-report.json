@@ -1,7 +1,7 @@
 {
-  "blocks_before": 22211,
-  "blocks_after": 15315,
-  "compressed_variable_reporters": 7079,
+  "blocks_before": 22736,
+  "blocks_after": 15682,
+  "compressed_variable_reporters": 7237,
   "unused_procedures": [
     "new or edit",
     "request demo track",
@@ -17,10 +17,10 @@
     "sprites": {
       "Stage": 295,
       "Game controller": 647,
-      "Physics": 1037,
-      "Track editor": 1230,
+      "Physics": 1290,
+      "Track editor": 1343,
       "Menus": 1939,
-      "Track codes": 601,
+      "Track codes": 602,
       "Renderer": 9564,
       "Prompt history": 2
     },

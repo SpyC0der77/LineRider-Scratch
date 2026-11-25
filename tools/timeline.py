@@ -2,6 +2,11 @@
 
 CACHE_LISTS = ('X', 'Y', 'PX', 'PY', 'VX', 'VY')
 CACHE_VARIABLES = ('Ride result', 'Mounted')
+# Per frame, the bounding box of grid cells queried by collisions. A line can
+# only influence a frame if one of its cells falls inside that box.
+CELL_BOUNDS = ('Cell X0', 'Cell X1', 'Cell Y0', 'Cell Y1')
+DIRTY_BOUNDS = (('X0', 'MinX'), ('X1', 'MaxX'), ('Y0', 'MinY'), ('Y1', 'MaxY'))
+SNAPSHOT = ('Spawn X', 'Spawn Y', 'Goal X', 'Goal Y', 'Goal enabled', 'Lowest track', 'Timeline detach frame')
 CANVAS_BOTTOM = -130
 RAIL_LEFT = -226
 RAIL_RIGHT = 68
@@ -61,6 +66,42 @@ def define_result_check(api):
     ])
 
 
+def mark_line(api, index, delta):
+    """Record a line added or about to be removed so the cache before it survives."""
+    V, L, setv, iff, cmp, change = (api[name] for name in ('V', 'L', 'setv', 'iff', 'cmp', 'change'))
+    grow = []
+    for bound, field in DIRTY_BOUNDS:
+        test = 'lt' if bound.endswith('0') else 'gt'
+        grow.append(iff(cmp(test, L(field, index), V('Timeline dirty ' + bound)),
+                        [setv('Timeline dirty ' + bound, L(field, index))]))
+    return [
+        iff(cmp('equals', V('Timeline dirty'), 0),
+            [setv('Timeline dirty ' + bound, L(field, index)) for bound, field in DIRTY_BOUNDS] + [setv('Timeline dirty', 1)],
+            grow),
+        change('Timeline expected lines', delta),
+    ]
+
+
+def mark_all(api):
+    return [api['setv']('Timeline dirty all', 1)]
+
+
+def reset_frame_cells(api):
+    setv = api['setv']
+    return [setv('Candidates key', 'none'), setv('Frame cell X0', 1e9), setv('Frame cell X1', -1e9),
+            setv('Frame cell Y0', 1e9), setv('Frame cell Y1', -1e9)]
+
+
+def track_frame_cells(api):
+    """Called with grid gx/gy on each collision query that rebuilds candidates."""
+    V, setv, iff, cmp = (api[name] for name in ('V', 'setv', 'iff', 'cmp'))
+    out = []
+    for axis, cell in (('X', 'grid gx'), ('Y', 'grid gy')):
+        out.append(iff(cmp('lt', V(cell), V('Frame cell ' + axis + '0')), [setv('Frame cell ' + axis + '0', V(cell))]))
+        out.append(iff(cmp('gt', V(cell), V('Frame cell ' + axis + '1')), [setv('Frame cell ' + axis + '1', V(cell))]))
+    return out
+
+
 def install(api):
     globals().update(api)
     point_count = len(pts)
@@ -68,7 +109,7 @@ def install(api):
     last_storable_frame = 200_000 // point_count - 1
     for name in CACHE_LISTS:
         lists['Physics ' + name] = ['Physics ' + name, lists[name][1][:]]
-    for name in CACHE_LISTS + CACHE_VARIABLES:
+    for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS:
         lists['Timeline ' + name] = ['Timeline ' + name, []]
 
     point = V('Timeline point')
@@ -87,11 +128,62 @@ def install(api):
             add('Timeline ' + name, L('Physics ' + name, point))
             for name in CACHE_LISTS
         ] + [change('Timeline point', 1)]),
-    ] + [add('Timeline ' + name, V('Physics ' + name)) for name in CACHE_VARIABLES])
+    ] + [add('Timeline ' + name, V('Physics ' + name)) for name in CACHE_VARIABLES]
+      + [add('Timeline ' + name, V('Frame ' + name.replace('Cell', 'cell'))) for name in CELL_BOUNDS])
 
     define_result_check(simulation_api(api))
     hip_x = L('Physics X', 5)
     hip_y = L('Physics Y', 5)
+
+    # Frames before the first one an edit can influence are kept, and the
+    # solver resumes from the last kept frame. Physics is sequential, so a
+    # frame after an influenced one cannot be computed before it.
+    resume = V('Timeline resume')
+    scan = V('Timeline scan')
+    def first_frame(condition):
+        return [setv('Timeline scan', 1), until(NOT(cmp('lt', scan, resume)), [
+            iff(condition, [setv('Timeline resume', scan)]), change('Timeline scan', 1),
+        ])]
+    def frame_value(name, frame_offset):
+        return L('Timeline ' + name, scan + frame_offset + 1)
+    def hip(name, frame_offset):
+        return L('Timeline ' + name, (scan + frame_offset) * point_count + 5)
+    def changed(name):
+        return NOT(cmp('equals', V(name), V('Timeline used ' + name)))
+    def crosses(goal):
+        return NOT(cmp('gt', (hip('X', -1) - goal) * (hip('X', 0) - goal), 0))
+    dirty_cells = [setv('Timeline dirty g' + bound, mathop('floor', V('Timeline dirty ' + bound) / 64)) for bound, _ in DIRTY_BOUNDS]
+    overlaps = AND(
+        AND(NOT(cmp('gt', frame_value('Cell X0', 0), V('Timeline dirty gX1'))),
+            NOT(cmp('lt', frame_value('Cell X1', 0), V('Timeline dirty gX0')))),
+        AND(NOT(cmp('gt', frame_value('Cell Y0', 0), V('Timeline dirty gY1'))),
+            NOT(cmp('lt', frame_value('Cell Y1', 0), V('Timeline dirty gY0')))),
+    )
+    lowest = V('Timeline lowest threshold')
+    proc('resolve timeline resume', [
+        setv('Timeline resume', end + 1),
+        iff(OR(OR(cmp('equals', length('Timeline Ride result'), 0), cmp('equals', V('Timeline dirty all'), 1)),
+               OR(OR(changed('Spawn X'), changed('Spawn Y')),
+                  NOT(cmp('equals', length('LX'), V('Timeline expected lines'))))), [
+            setv('Timeline resume', 0),
+        ]),
+        iff(AND(cmp('equals', V('Timeline dirty'), 1), cmp('gt', resume, 1)),
+            dirty_cells + first_frame(overlaps)),
+        iff(changed('Lowest track'), [
+            setv('Timeline lowest threshold', V('Lowest track')),
+            iff(cmp('lt', V('Timeline used Lowest track'), lowest), [setv('Timeline lowest threshold', V('Timeline used Lowest track'))]),
+            setv('Timeline lowest threshold', lowest + 160),
+        ] + first_frame(cmp('gt', hip('Y', 0), lowest))),
+        iff(OR(OR(changed('Goal X'), changed('Goal Y')), changed('Goal enabled')),
+            first_frame(OR(crosses(V('Goal X')), crosses(V('Timeline used Goal X'))))),
+        iff(changed('Timeline detach frame'), [
+            iff(AND(cmp('gt', requested_detach, 0), cmp('lt', requested_detach, resume)), [setv('Timeline resume', requested_detach)]),
+            iff(AND(cmp('gt', V('Timeline used Timeline detach frame'), 0), cmp('lt', V('Timeline used Timeline detach frame'), resume)),
+                [setv('Timeline resume', V('Timeline used Timeline detach frame'))]),
+        ]),
+    ] + [setv('Timeline used ' + name, V(name)) for name in SNAPSHOT] + [
+        setv('Timeline dirty', 0), setv('Timeline dirty all', 0), setv('Timeline expected lines', length('LX')),
+    ])
 
     proc('update timeline', [
         iff(OR(cmp('equals', V('Grid ready'), 0), cmp('equals', V('Timeline restart'), 1)), [
@@ -99,11 +191,29 @@ def install(api):
             setv('Timeline restart', 0),
             setv('Timeline ready', 0),
             setv('Timeline current pose', 0),
-        ] + [clear('Timeline ' + name) for name in CACHE_LISTS + CACHE_VARIABLES] + [
-            call('reset rider'),
-            setv('Physics Ride result', 1),
-            call('record timeline frame'),
-            setv('Timeline end', 0),
+            call('resolve timeline resume'),
+            iff(cmp('equals', resume, 0), [
+                clear('Timeline ' + name) for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS
+            ] + [
+                call('reset rider'),
+                setv('Physics Ride result', 1),
+            ] + reset_frame_cells(api) + [
+                call('record timeline frame'),
+                setv('Timeline end', 0),
+            ], [
+                # Restore the solver from the last kept frame and drop the rest.
+                setv('Timeline index', (resume - 1) * point_count + 1),
+                setv('Timeline point', 1),
+                loop(point_count, [
+                    replace('Physics ' + name, point, L('Timeline ' + name, offset)) for name in CACHE_LISTS
+                ] + [change('Timeline point', 1), change('Timeline index', 1)]),
+            ] + [setv('Physics ' + name, L('Timeline ' + name, resume)) for name in CACHE_VARIABLES] + [
+                setv('Physics Frame', resume - 1),
+                loop((end - resume + 1) * point_count, [delete('Timeline ' + name) for name in CACHE_LISTS]),
+                loop(end - resume + 1, [delete('Timeline ' + name) for name in CACHE_VARIABLES + CELL_BOUNDS]),
+                setv('Timeline end', resume - 1),
+                iff(cmp('gt', physics_result, 1), [setv('Timeline ready', 1)]),
+            ]),
             iff(cmp('gt', target, 0), [setv('Timeline refocus', 1)]),
         ]),
         iff(cmp('equals', ready, 0), [
@@ -116,6 +226,7 @@ def install(api):
                 iff(cmp('equals', physics_frame + 1, requested_detach), [
                     setv('Physics Mounted', 0),
                 ]),
+            ] + reset_frame_cells(api) + [
                 call('physics frame'),
                 call('check result'),
                 iff(AND(cmp('equals', physics_result, 1), cmp('equals', physics_frame, last_storable_frame)), [

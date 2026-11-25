@@ -134,7 +134,7 @@ def install(api):
     proc('commit track code', [call('begin change')] + [clear(f) for f in FIELDS] + [
         setv('Code line', 1), loop(V('Code count'), geometry+[change('Code line',1)])] + [
         setv(name, V('Code '+name)/SCALE) for name in ['Spawn X','Spawn Y','Goal X','Goal Y']] + [
-        setv('Goal enabled', V('Code goal enabled')), setv('Grid ready',0), call('home view'), setv('Notice', 4), setv('Notice until', Expr('sensing_timer')+5)])
+        setv('Goal enabled', V('Code goal enabled')), setv('Timeline dirty all',1), setv('Grid ready',0), call('home view'), setv('Notice', 4), setv('Notice until', Expr('sensing_timer')+5)])
     proc('prompt track code', [stmt('sensing_askandwait', {'QUESTION':'Paste a track code. Leave blank to cancel.'}),
         setv('Code raw', Expr('sensing_answer')), clear('Input keys'), setv('Queued click',0),
         iff(cmp('equals', V('Code raw'), ''), [call('close track code')], [call('decode track code'),
