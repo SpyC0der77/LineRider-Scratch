@@ -114,14 +114,13 @@ def erase_test(name):
 # Cell walk: every line whose padded AABB reaches the cell is in its chain.
 proc('erase cell walk',[setv('erase slot',op('mod',V('erase cx')*7919+V('erase cy'),V('Grid size'))+1),setv('erase key',V('erase cx')*100000+V('erase cy')),setv('erase node',L('Grid heads',V('erase slot'))),until(cmp('equals',V('erase node'),0),[iff(cmp('equals',L('Grid cell',V('erase node')),V('erase key')),[setv('erase h',L('Grid line',V('erase node')))]+erase_test('erase h')),setv('erase node',L('Grid next',V('erase node')))])])
 # With the grid valid and 9/Zoom <= 74, a line within the radius lies in one of the 3x3 cells around the pointer (its padded AABB is within 10 of the segment; the radius minus 10 is at most 64).
-# A dirty grid is rebuilt here, and Timeline restart keeps the ride recalculation.
+# After a deletion the grid is stale until the next timeline rebuild, so the full scan is used.
 walk_cells=[]
 for dx in (-1,0,1):
  for dy in (-1,0,1):
   walk_cells+=[setv('erase cx',V('erase gx')+dx),setv('erase cy',V('erase gy')+dy),call('erase cell walk')]
 proc('erase under pointer',[setv('best distance',9/V('Zoom')),setv('erase id',0),
- iff(NOT(cmp('gt',9/V('Zoom'),74)),[
-  iff(cmp('equals',V('Grid ready'),0),[call('build spatial grid'),setv('Timeline restart',1)]),
+ iff(AND(cmp('equals',V('Grid ready'),1),NOT(cmp('gt',9/V('Zoom'),74))),[
   setv('erase gx',mathop('floor',V('World X')/64)),setv('erase gy',mathop('floor',V('World Y')/64)),
  ]+walk_cells,[
   setv('h',1),loop(length('LX'),erase_test('h')+[change('h',1)]),
