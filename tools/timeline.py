@@ -10,6 +10,8 @@ SNAPSHOT = ('Spawn X', 'Spawn Y', 'Goal X', 'Goal Y', 'Goal enabled', 'Lowest tr
 CANVAS_BOTTOM = -130
 RAIL_LEFT = -226
 RAIL_RIGHT = 68
+# Wall-clock work allowed per editor tick while the ride timeline is computed.
+TIMELINE_BUDGET_MS = 60
 
 
 def simulation_api(api):
@@ -218,9 +220,11 @@ def install(api):
         ]),
         iff(cmp('equals', ready, 0), [
             # Yield to input and drawing between batches while computing the
-            # complete ride. The budget limits work per tick, not ride length.
-            setv('Timeline budget', Expr('sensing_timer') + .035),
-            until(OR(cmp('equals', ready, 1), cmp('gt', Expr('sensing_timer'), V('Timeline budget'))), [
+            # complete ride. sensing_timer is frozen during a step (scratch-vm
+            # reads runtime.currentMSecs), so the budget uses the live clock
+            # sensing_dayssince2000 (Date.now) converted to milliseconds.
+            setv('Timeline budget', Expr('sensing_dayssince2000') * 86400000 + TIMELINE_BUDGET_MS),
+            until(OR(cmp('equals', ready, 1), cmp('gt', Expr('sensing_dayssince2000') * 86400000, V('Timeline budget'))), [
                 setv('Previous hip X', hip_x),
                 setv('Previous hip Y', hip_y),
                 iff(cmp('equals', physics_frame + 1, requested_detach), [

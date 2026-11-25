@@ -1,6 +1,6 @@
 {
-  "blocks_before": 24241,
-  "blocks_after": 16829,
+  "blocks_before": 24243,
+  "blocks_after": 16831,
   "compressed_variable_reporters": 7595,
   "unused_procedures": [
     "new or edit",
@@ -17,7 +17,7 @@
     "sprites": {
       "Stage": 295,
       "Game controller": 647,
-      "Physics": 2437,
+      "Physics": 2439,
       "Track editor": 1343,
       "Menus": 1939,
       "Track codes": 602,
