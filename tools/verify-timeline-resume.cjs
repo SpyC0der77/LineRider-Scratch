@@ -14,9 +14,9 @@ console.warn = (...a) => { if (!String(a[0]).startsWith('Translation for')) warn
 
 const FILE = path.join(__dirname, '..', 'dist', 'Line Rider.sb3');
 const TRACK = ['LX', 'LY', 'DX', 'DY', 'NX', 'NY', 'InvSq', 'Material', 'MinX', 'MaxX', 'MinY', 'MaxY'];
-const CACHE = ['Timeline X', 'Timeline Y', 'Timeline PX', 'Timeline PY', 'Timeline VX', 'Timeline VY',
+const CACHE = ['Timeline X', 'Timeline Y', 'Timeline PX', 'Timeline PY',
     'Timeline Ride result', 'Timeline Mounted'];
-const POINT_LISTS = new Set(CACHE.slice(0, 6));
+const POINT_LISTS = new Set(CACHE.slice(0, 4));
 const KINDS = ['near', 'delete', 'far', 'goal', 'detach', 'lowest'];
 const MATERIALS = [0, 0, 0, 1, 2, 4, 5, 3];
 const TIMEOUT_MS = 120000;

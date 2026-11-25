@@ -37,7 +37,7 @@ try {
     const build = resolve('dist/Line Rider.sb3');
     const comparison = process.env.LINE_RIDER_COMPARISON;
     const fields = ['LX', 'LY', 'DX', 'DY', 'Material', 'Timeline X', 'Timeline Y',
-        'Timeline PX', 'Timeline PY', 'Timeline VX', 'Timeline VY', 'Timeline Ride result'];
+        'Timeline PX', 'Timeline PY', 'Timeline Ride result'];
     let previous;
     if (comparison) {
         await session.openFile(resolve(comparison));
@@ -65,7 +65,7 @@ try {
         for (const [i, field] of fields.entries()) {
             assert.deepEqual(await list(field), previous[i], field);
         }
-        console.log('PASS all cached poses, velocities and track segments match the approved build');
+        console.log('PASS all cached poses and track segments match the approved build');
     }
     console.log('PASS full timeline through finish at frame', end);
 

@@ -1,6 +1,9 @@
 """Precompute the ride in native Scratch and display it at an independent playhead."""
 
-CACHE_LISTS = ('X', 'Y', 'PX', 'PY', 'VX', 'VY')
+# Positions are cached per frame. Velocities are not: integrate points rebuilds
+# them from the restored positions before collisions read them.
+CACHE_LISTS = ('X', 'Y', 'PX', 'PY')
+SOLVER_LISTS = CACHE_LISTS + ('VX', 'VY')
 CACHE_VARIABLES = ('Ride result', 'Mounted')
 # Per frame, the bounding box of grid cells queried by collisions. A line can
 # only influence a frame if one of its cells falls inside that box.
@@ -24,7 +27,7 @@ def simulation_api(api):
         return name
 
     def points(name):
-        return 'Physics ' + name if name in CACHE_LISTS else name
+        return 'Physics ' + name if name in SOLVER_LISTS else name
 
     return {
         **api,
@@ -163,7 +166,7 @@ def install(api):
     point_count = len(pts)
     # Scratch lists hold at most 200,000 items. Frame zero occupies the first row.
     last_storable_frame = 200_000 // point_count - 1
-    for name in CACHE_LISTS:
+    for name in SOLVER_LISTS:
         lists['Physics ' + name] = ['Physics ' + name, lists[name][1][:]]
     for name in CACHE_LISTS + CACHE_VARIABLES + CELL_BOUNDS:
         lists['Timeline ' + name] = ['Timeline ' + name, []]
@@ -297,6 +300,9 @@ def install(api):
         ]),
     ])
 
+    previous = (V('Frame') - 1) * point_count + 5
+    speed_x = (L('Timeline X', previous) - L('Timeline PX', previous)) * (1 - L('Air', 5))
+    speed_y = (L('Timeline Y', previous) - L('Timeline PY', previous)) * (1 - L('Air', 5)) + .175
     proc('read timeline frame', [
         setv('Timeline selected', target),
         iff(cmp('gt', target, end), [setv('Timeline selected', end)]),
@@ -312,6 +318,9 @@ def install(api):
                 replace(name, point, L('Timeline ' + name, offset)) for name in CACHE_LISTS
             ] + [change('Timeline point', 1), change('Timeline index', 1)]),
         ] + [setv(name, L('Timeline ' + name, V('Frame') + 1)) for name in CACHE_VARIABLES] + [
+            # The hip's speed is the velocity integrate points used on this frame, which the previous frame's cached positions define.
+            iff(cmp('gt', V('Frame'), 0), [setv('Timeline speed', mathop('sqrt', speed_x * speed_x + speed_y * speed_y))],
+                [setv('Timeline speed', .4)]),
             setv('Timeline current pose', 1),
         ]),
         iff(cmp('equals', V('Timeline current pose'), 1), [
