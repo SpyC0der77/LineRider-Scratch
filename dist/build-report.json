@@ -1,7 +1,7 @@
 {
-  "blocks_before": 22736,
-  "blocks_after": 15682,
-  "compressed_variable_reporters": 7237,
+  "blocks_before": 22828,
+  "blocks_after": 15739,
+  "compressed_variable_reporters": 7272,
   "unused_procedures": [
     "new or edit",
     "request demo track",
@@ -21,7 +21,7 @@
       "Track editor": 1343,
       "Menus": 1939,
       "Track codes": 602,
-      "Renderer": 9564,
+      "Renderer": 9621,
       "Prompt history": 2
     },
     "cross_sprite_call_sites": 54,

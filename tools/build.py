@@ -136,7 +136,16 @@ def screenx(x):return (x-V('Camera X'))*V('Zoom')
 def screeny(y):return -20+20*V('Full play')-(y-V('Camera Y'))*V('Zoom')
 proc('clip boundary',[iff(cmp('equals',V('clip p'),0),[iff(cmp('lt',V('clip q'),0),[setv('clip valid',0)])],[setv('clip r',V('clip q')/V('clip p')),iff(cmp('lt',V('clip p'),0),[iff(cmp('gt',V('clip r'),V('clip t1')),[setv('clip valid',0)]),iff(cmp('gt',V('clip r'),V('clip t0')),[setv('clip t0',V('clip r'))])],[iff(cmp('lt',V('clip r'),V('clip t0')),[setv('clip valid',0)]),iff(cmp('lt',V('clip r'),V('clip t1')),[setv('clip t1',V('clip r'))])])])])
 def costume_to(name):return stmt('looks_switchcostumeto',{'COSTUME':name})
-proc('draw clipped segment',[setv('clip dx',V('sx2')-V('sx1')),setv('clip dy',V('sy2')-V('sy1')),setv('clip t0',0),setv('clip t1',1),setv('clip valid',1)]+sum(([setv('clip p',p),setv('clip q',q),call('clip boundary')] for p,q in [(0-V('clip dx'),V('sx1')+239),(V('clip dx'),239-V('sx1')),(0-V('clip dy'),V('sy1')-V('Canvas bottom')),(V('clip dy'),V('Canvas top')-V('sy1'))]),[])+[iff(cmp('equals',V('clip valid'),1),[stmt('pen_penUp'),goto(V('sx1')+V('clip dx')*V('clip t0'),V('sy1')+V('clip dy')*V('clip t0')),stmt('pen_penDown'),goto(V('sx1')+V('clip dx')*V('clip t1'),V('sy1')+V('clip dy')*V('clip t1')),stmt('pen_penUp')])])
+# Fast paths: strictly inside the clip rectangle draws directly; strictly outside one side draws nothing.
+# Boundary endpoints use the Liang-Barsky path, so every drawn point stays identical.
+def clip_nest(conds,body):
+ for c in reversed(conds):body=[iff(c,body)]
+ return body
+def clip_draw_direct():return [stmt('pen_penUp'),goto(V('sx1')+V('clip dx')*0,V('sy1')+V('clip dy')*0),stmt('pen_penDown'),goto(V('sx1')+V('clip dx')*1,V('sy1')+V('clip dy')*1),stmt('pen_penUp')]
+def clip_fallback():return [setv('clip t0',0),setv('clip t1',1),setv('clip valid',1)]+sum(([setv('clip p',p),setv('clip q',q),call('clip boundary')] for p,q in [(0-V('clip dx'),V('sx1')+239),(V('clip dx'),239-V('sx1')),(0-V('clip dy'),V('sy1')-V('Canvas bottom')),(V('clip dy'),V('Canvas top')-V('sy1'))]),[])+[iff(cmp('equals',V('clip valid'),1),[stmt('pen_penUp'),goto(V('sx1')+V('clip dx')*V('clip t0'),V('sy1')+V('clip dy')*V('clip t0')),stmt('pen_penDown'),goto(V('sx1')+V('clip dx')*V('clip t1'),V('sy1')+V('clip dy')*V('clip t1')),stmt('pen_penUp')])]
+inside=[cmp('gt',V('sx1'),-239),cmp('lt',V('sx1'),239),cmp('gt',V('sx2'),-239),cmp('lt',V('sx2'),239),cmp('gt',V('sy1'),V('Canvas bottom')),cmp('lt',V('sy1'),V('Canvas top')),cmp('gt',V('sy2'),V('Canvas bottom')),cmp('lt',V('sy2'),V('Canvas top'))]
+outside=[iff(cmp('lt',V('sx1'),-239),[iff(cmp('lt',V('sx2'),-239),[setv('clip path',2)])]),iff(cmp('gt',V('sx1'),239),[iff(cmp('gt',V('sx2'),239),[setv('clip path',2)])]),iff(cmp('lt',V('sy1'),V('Canvas bottom')),[iff(cmp('lt',V('sy2'),V('Canvas bottom')),[setv('clip path',2)])]),iff(cmp('gt',V('sy1'),V('Canvas top')),[iff(cmp('gt',V('sy2'),V('Canvas top')),[setv('clip path',2)])])]
+proc('draw clipped segment',[setv('clip dx',V('sx2')-V('sx1')),setv('clip dy',V('sy2')-V('sy1')),setv('clip path',0)]+clip_nest(inside,[setv('clip path',1)])+[iff(cmp('equals',V('clip path'),1),clip_draw_direct()),iff(cmp('equals',V('clip path'),0),outside+[iff(cmp('equals',V('clip path'),0),clip_fallback())])])
 def line(x,y,xx,yy):return [setv('sx1',x),setv('sy1',y),setv('sx2',xx),setv('sy2',yy),call('draw clipped segment')]
 def worldline(x,y,xx,yy):return line(screenx(x),screeny(y),screenx(xx),screeny(yy))
 def segment(a,b):return worldline(L('X',a),L('Y',a),L('X',b),L('Y',b))
